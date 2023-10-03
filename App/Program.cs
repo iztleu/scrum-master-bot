@@ -14,7 +14,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient("telegram_bot_client")
     .AddTypedClient<ITelegramBotClient>((httpClient, sp) =>
     {
-        TelegramBotClientOptions options = new("6593045230:AAHHpf_NExM9f6_jDh5-ABQ77ZK3Golv5XY");
+        TelegramBotClientOptions options = new("");
         return new TelegramBotClient(options, httpClient);
     });
 
