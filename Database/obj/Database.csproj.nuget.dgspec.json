@@ -1,26 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "/Users/mbp15-2015/RiderProjects/ScrumMasterBot/Database/Database.csproj": {}
+    "/home/diztleu/RiderProjects/scrum-master-bot/Database/Database.csproj": {}
   },
   "projects": {
-    "/Users/mbp15-2015/RiderProjects/ScrumMasterBot/Database/Database.csproj": {
+    "/home/diztleu/RiderProjects/scrum-master-bot/Database/Database.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/mbp15-2015/RiderProjects/ScrumMasterBot/Database/Database.csproj",
+        "projectUniqueName": "/home/diztleu/RiderProjects/scrum-master-bot/Database/Database.csproj",
         "projectName": "Database",
-        "projectPath": "/Users/mbp15-2015/RiderProjects/ScrumMasterBot/Database/Database.csproj",
-        "packagesPath": "/Users/mbp15-2015/.nuget/packages/",
-        "outputPath": "/Users/mbp15-2015/RiderProjects/ScrumMasterBot/Database/obj/",
+        "projectPath": "/home/diztleu/RiderProjects/scrum-master-bot/Database/Database.csproj",
+        "packagesPath": "/home/diztleu/.nuget/packages/",
+        "outputPath": "/home/diztleu/RiderProjects/scrum-master-bot/Database/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/mbp15-2015/.nuget/NuGet/NuGet.Config"
+          "/home/diztleu/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net7.0"
         ],
         "sources": {
-          "/usr/local/share/dotnet/library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -54,7 +53,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/7.0.203/RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/home/diztleu/sdk/dotnet/sdk/7.0.401/RuntimeIdentifierGraph.json"
         }
       }
     }

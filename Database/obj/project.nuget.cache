@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "6MubuLquk2q9NxfrNwx3f86dppZtgS/ILtxzssuqiQSJMo435qxjDx5zeOx8xyhiLKuNBgoq+O3yVLssmyhNLw==",
+  "dgSpecHash": "eN2l775sS3UARrCivdbYcE8rwgbr1h2bSpp4xc04Y5dBqbgmf4JcIJfsX7u23X31FWEZEtAHbG9lG3XqYR4bOg==",
   "success": true,
-  "projectFilePath": "/Users/mbp15-2015/RiderProjects/ScrumMasterBot/Database/Database.csproj",
+  "projectFilePath": "/home/diztleu/RiderProjects/scrum-master-bot/Database/Database.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }
