@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using Database;
+using Database.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
@@ -55,23 +56,32 @@ public class UpdateHandler : IUpdateHandler
             return;
         
         var user = await GetUser(message, cancellationToken);
-        var action = await GetAction(user, cancellationToken);
+        var userAction = await GetAction(user, cancellationToken);
+
+        if (userAction is not null)
+        {
+            var actionResult = userAction.Type switch
+            {
+                ActionType.CreateScrumTeam => DoAction(_botClient, userAction, message, cancellationToken),
+                _ => throw new ArgumentOutOfRangeException(nameof(ActionType))
+            };
+        }
         
-        // var action = messageText.Split(' ')[0] switch
-        // {
-        //     "/inline_keyboard" => SendInlineKeyboard(_botClient, message, cancellationToken),
-        //     "/keyboard" => SendReplyKeyboard(_botClient, message, cancellationToken),
-        //     "/remove" => RemoveKeyboard(_botClient, message, cancellationToken),
-        //     "/photo" => SendFile(_botClient, message, cancellationToken),
-        //     "/request" => RequestContactAndLocation(_botClient, message, cancellationToken),
-        //     "/inline_mode" => StartInlineQuery(_botClient, message, cancellationToken),
-        //     "/throw" => FailingHandler(_botClient, message, cancellationToken),
-        //     "/start" => Start(_botClient, message, cancellationToken),
-        //     Buttons.CreateScrumTeam => CreateScrumTeam(_botClient, message, cancellationToken),
-        //     _ => Usage(_botClient, message, cancellationToken)
-        // };
-        // Message sentMessage = await action;
-        // _logger.LogInformation("The message was sent with id: {SentMessageId}", sentMessage.MessageId);
+        var action = messageText.Split(' ')[0] switch
+        {
+            "/inline_keyboard" => SendInlineKeyboard(_botClient, message, cancellationToken),
+            "/keyboard" => SendReplyKeyboard(_botClient, message, cancellationToken),
+            "/remove" => RemoveKeyboard(_botClient, message, cancellationToken),
+            "/photo" => SendFile(_botClient, message, cancellationToken),
+            "/request" => RequestContactAndLocation(_botClient, message, cancellationToken),
+            "/inline_mode" => StartInlineQuery(_botClient, message, cancellationToken),
+            "/throw" => FailingHandler(_botClient, message, cancellationToken),
+            "/start" => Start(_botClient, message, cancellationToken),
+            Buttons.CreateScrumTeam => CreateScrumTeam(_botClient, message, cancellationToken),
+            _ => Usage(_botClient, message, cancellationToken)
+        };
+        Message sentMessage = await action;
+        _logger.LogInformation("The message was sent with id: {SentMessageId}", sentMessage.MessageId);
 
         async Task<Message> Start(ITelegramBotClient botClient, Message message, CancellationToken cancellationToken)
         {
@@ -93,6 +103,22 @@ public class UpdateHandler : IUpdateHandler
 
         async Task<Message> CreateScrumTeam(ITelegramBotClient botClient, Message message, CancellationToken cancellationToken)
         {
+            
+            return await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"Здравствуйте, {message.From}!",
+                cancellationToken: cancellationToken);
+        }
+        
+        async Task<Message> DoAction(ITelegramBotClient botClient,  Action action, Message message, CancellationToken cancellationToken)
+        {
+            
+            var actionResult = userAction.Type switch
+            {
+                ActionType.CreateScrumTeam => DoAction(_botClient, userAction, message, cancellationToken),
+                _ => throw new ArgumentOutOfRangeException(nameof(ActionType))
+            };
+            
             return await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
                 text: $"Здравствуйте, {message.From}!",

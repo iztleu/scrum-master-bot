@@ -8,6 +8,11 @@ using TelegramBot;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+if (builder.Environment.IsDevelopment())
+{
+    Console.WriteLine("Development environment");
+}
+
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
