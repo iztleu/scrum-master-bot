@@ -1,3 +1,6 @@
+using System.ComponentModel;
+using Database;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
@@ -6,6 +9,8 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.InlineQueryResults;
 using Telegram.Bot.Types.ReplyMarkups;
+using Action = Database.Models.Action;
+using UserModel = Database.Models.User;
 
 namespace TelegramBot;
 
@@ -13,11 +18,13 @@ public class UpdateHandler : IUpdateHandler
 {
     private readonly ITelegramBotClient _botClient;
     private readonly ILogger<UpdateHandler> _logger;
-
-    public UpdateHandler(ITelegramBotClient botClient, ILogger<UpdateHandler> logger)
+    private readonly ScrumMasterDbContext _dbContext;
+    
+    public UpdateHandler(ITelegramBotClient botClient, ILogger<UpdateHandler> logger, ScrumMasterDbContext dbContext)
     {
         _botClient = botClient;
         _logger = logger;
+        _dbContext = dbContext;
     }
 
     public async Task HandleUpdateAsync(ITelegramBotClient _, Update update, CancellationToken cancellationToken)
@@ -46,21 +53,52 @@ public class UpdateHandler : IUpdateHandler
         _logger.LogInformation("Receive message type: {MessageType}", message.Type);
         if (message.Text is not { } messageText)
             return;
+        
+        var user = await GetUser(message, cancellationToken);
+        var action = await GetAction(user, cancellationToken);
+        
+        // var action = messageText.Split(' ')[0] switch
+        // {
+        //     "/inline_keyboard" => SendInlineKeyboard(_botClient, message, cancellationToken),
+        //     "/keyboard" => SendReplyKeyboard(_botClient, message, cancellationToken),
+        //     "/remove" => RemoveKeyboard(_botClient, message, cancellationToken),
+        //     "/photo" => SendFile(_botClient, message, cancellationToken),
+        //     "/request" => RequestContactAndLocation(_botClient, message, cancellationToken),
+        //     "/inline_mode" => StartInlineQuery(_botClient, message, cancellationToken),
+        //     "/throw" => FailingHandler(_botClient, message, cancellationToken),
+        //     "/start" => Start(_botClient, message, cancellationToken),
+        //     Buttons.CreateScrumTeam => CreateScrumTeam(_botClient, message, cancellationToken),
+        //     _ => Usage(_botClient, message, cancellationToken)
+        // };
+        // Message sentMessage = await action;
+        // _logger.LogInformation("The message was sent with id: {SentMessageId}", sentMessage.MessageId);
 
-        var action = messageText.Split(' ')[0] switch
+        async Task<Message> Start(ITelegramBotClient botClient, Message message, CancellationToken cancellationToken)
         {
-            "/inline_keyboard" => SendInlineKeyboard(_botClient, message, cancellationToken),
-            "/keyboard" => SendReplyKeyboard(_botClient, message, cancellationToken),
-            "/remove" => RemoveKeyboard(_botClient, message, cancellationToken),
-            "/photo" => SendFile(_botClient, message, cancellationToken),
-            "/request" => RequestContactAndLocation(_botClient, message, cancellationToken),
-            "/inline_mode" => StartInlineQuery(_botClient, message, cancellationToken),
-            "/throw" => FailingHandler(_botClient, message, cancellationToken),
-            _ => Usage(_botClient, message, cancellationToken)
-        };
-        Message sentMessage = await action;
-        _logger.LogInformation("The message was sent with id: {SentMessageId}", sentMessage.MessageId);
+            ReplyKeyboardMarkup replyKeyboardMarkup = new(
+                new[]
+                {
+                    new KeyboardButton[] { Buttons.CreateScrumTeam},
+                })
+            {
+                ResizeKeyboard = true
+            };
+            
+            return await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"Здравствуйте, {message.From}!",
+                replyMarkup: replyKeyboardMarkup,
+                cancellationToken: cancellationToken);
+        }
 
+        async Task<Message> CreateScrumTeam(ITelegramBotClient botClient, Message message, CancellationToken cancellationToken)
+        {
+            return await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"Здравствуйте, {message.From}!",
+                cancellationToken: cancellationToken);
+        }
+        
         // Send inline keyboard
         // You can process responses in BotOnCallbackQueryReceived handler
         static async Task<Message> SendInlineKeyboard(ITelegramBotClient botClient, Message message, CancellationToken cancellationToken)
@@ -161,7 +199,8 @@ public class UpdateHandler : IUpdateHandler
 
         static async Task<Message> Usage(ITelegramBotClient botClient, Message message, CancellationToken cancellationToken)
         {
-            const string usage = "Usage:\n" +
+            string usage = "Usage:\n" +
+                                 "/start       - send greeting message\n" +
                                  "/inline_keyboard - send inline keyboard\n" +
                                  "/keyboard    - send custom keyboard\n" +
                                  "/remove      - remove custom keyboard\n" +
@@ -174,8 +213,8 @@ public class UpdateHandler : IUpdateHandler
                 text: usage,
                 replyMarkup: new ReplyKeyboardRemove(),
                 cancellationToken: cancellationToken);
-        }
-
+        }     
+        
         static async Task<Message> StartInlineQuery(ITelegramBotClient botClient, Message message, CancellationToken cancellationToken)
         {
             InlineKeyboardMarkup inlineKeyboard = new(
@@ -193,6 +232,8 @@ public class UpdateHandler : IUpdateHandler
             throw new IndexOutOfRangeException();
         }
     }
+
+  
 
     // Process Inline Keyboard callback data
     private async Task BotOnCallbackQueryReceived(CallbackQuery callbackQuery, CancellationToken cancellationToken)
@@ -264,4 +305,40 @@ public class UpdateHandler : IUpdateHandler
         if (exception is RequestException)
             await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
     }
+
+    private async Task<UserModel> GetUser(Message message, CancellationToken cancellationToken)
+    {
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.TelegramUserId == message.From.Id, cancellationToken);
+        if (user is null)
+        {
+            user = new()
+            {
+                TelegramUserId = message.From.Id,
+                UserName = message.From.Username,
+                ChatId = message.Chat.Id
+            };
+            await _dbContext.Users.AddAsync(user, cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+            
+        if(user.ChatId != message.Chat.Id)
+        {
+            user.ChatId = message.Chat.Id;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        return user;
+    }
+    
+    private async Task<Action?> GetAction(UserModel user, CancellationToken cancellationToken)
+    {
+        return await _dbContext.Actions.FirstOrDefaultAsync(a => a.UserId == user.Id, cancellationToken);;
+    }
+}
+
+public static class Buttons
+{
+    public const string CreateScrumTeam = "Создать Scrum команду";
+    public const string JoinScrumTeam = "Присоединиться к Scrum команде";
+    public const string LeaveScrumTeam = "Покинуть Scrum команду";
 }
