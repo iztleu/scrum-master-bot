@@ -1,4 +1,6 @@
 using App.Services;
+using Database;
+using Microsoft.EntityFrameworkCore;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using TelegramBot;
@@ -23,6 +25,13 @@ builder.Logging.AddConsole();
 builder.Services.AddScoped<IUpdateHandler, UpdateHandler>();
 builder.Services.AddScoped<IReceiverService, ReceiverService>();
 builder.Services.AddHostedService<TelegramBotService>();
+
+builder.Services
+    .AddDbContext<ScrumMasterDbContext>(
+        optionsBuilder => optionsBuilder.UseNpgsql(
+            builder.Configuration.GetConnectionString("DefaultConnection"),
+            npgsqlOptions => npgsqlOptions.UseAdminDatabase("postgres")));
+
 
 var app = builder.Build();
 
