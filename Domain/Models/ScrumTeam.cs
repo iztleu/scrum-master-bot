@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Database.Models;
+namespace Domain.Models;
 
 public class ScrumTeam
 {

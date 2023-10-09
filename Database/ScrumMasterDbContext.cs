@@ -1,6 +1,7 @@
-using Database.Models;
+using Domain.Models;
+using Domain.Models;
 using Microsoft.EntityFrameworkCore;
-using Action = Database.Models.Action;
+using Action = Domain.Models.Action;
 
 namespace Database;
 

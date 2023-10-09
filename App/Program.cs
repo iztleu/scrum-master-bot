@@ -1,6 +1,11 @@
+using System.Reflection;
 using App;
+using App.Features.Auth.Registration;
+using App.Pipeline.Behaviors;
+using App.Errors.Extensions;
 using App.Services;
 using Database;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
@@ -11,8 +16,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
+builder.Services.AddMediatR(cfg => cfg
+    .RegisterServicesFromAssembly(Assembly.GetExecutingAssembly())
+    .AddOpenBehavior(typeof(LoggingBehavior<,>))
+    .AddOpenBehavior(typeof(ValidationBehavior<,>)));
+
+builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+builder.Services.AddScoped<CurrentAuthInfoSource>();
+
+builder.AddAuth();
+
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient("telegram_bot_client")
@@ -23,10 +38,9 @@ builder.Services.AddHttpClient("telegram_bot_client")
     });
 
 builder.AddDbContext();
-
-builder.Services.AddScoped<IUpdateHandler, UpdateHandler>();
-builder.Services.AddScoped<IReceiverService, ReceiverService>();
-builder.Services.AddHostedService<TelegramBotService>();
+// builder.Services.AddScoped<IUpdateHandler, UpdateHandler>();
+// builder.Services.AddScoped<IReceiverService, ReceiverService>();
+// builder.Services.AddHostedService<TelegramBotService>();
 
 
 var app = builder.Build();
@@ -40,9 +54,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapProblemDetails();
 
 RunMigration(app);
 

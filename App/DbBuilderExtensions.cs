@@ -19,7 +19,7 @@ public static class DbBuilderExtensions
             .AddDbContext<ScrumMasterDbContext>(
                 optionsBuilder => optionsBuilder.UseNpgsql(
                     builder.Configuration.GetConnectionString("DefaultConnection"),
-                    npgsqlOptions => npgsqlOptions.UseAdminDatabase("postgres")));
+                    npgsqlOptions => npgsqlOptions.UseAdminDatabase("postgres")), ServiceLifetime.Transient);
         
         return builder;
     }

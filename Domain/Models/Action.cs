@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Database.Models;
+namespace Domain.Models;
 
 public class Action
 {
@@ -20,4 +20,5 @@ public class Action
 public enum ActionType
 {
     CreateScrumTeam,
+    ShowTeam,
 }

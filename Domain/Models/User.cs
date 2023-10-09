@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Database.Models;
+namespace Domain.Models;
 
 public class User
 {
@@ -12,4 +12,6 @@ public class User
     public long TelegramUserId { get; set; }
     [Required] 
     public long ChatId { get; set; }
+    
+    public string VerifyCode { get; set; }
 }
