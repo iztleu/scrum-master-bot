@@ -38,19 +38,19 @@ builder.Services.AddHttpClient("telegram_bot_client")
     });
 
 builder.AddDbContext();
-// builder.Services.AddScoped<IUpdateHandler, UpdateHandler>();
-// builder.Services.AddScoped<IReceiverService, ReceiverService>();
-// builder.Services.AddHostedService<TelegramBotService>();
+builder.Services.AddScoped<IUpdateHandler, UpdateHandler>();
+builder.Services.AddScoped<IReceiverService, ReceiverService>();
+builder.Services.AddHostedService<TelegramBotService>();
 
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// if (app.Environment.IsDevelopment())
+// {
+//     app.UseSwagger();
+//     app.UseSwaggerUI();
+// }
 
 app.UseHttpsRedirection();
 

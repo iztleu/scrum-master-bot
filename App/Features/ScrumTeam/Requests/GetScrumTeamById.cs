@@ -11,7 +11,7 @@ namespace App.Features.ScrumTeam.Requests;
 
 public class GetScrumTeamById
 {
-    public record Request(int id) : IRequest<Response>;
+    public record Request(int UserId, int TeamId) : IRequest<Response>;
 
     public record Response(Team team);
     
@@ -32,7 +32,7 @@ public class GetScrumTeamById
             var team = await _dbContext.ScrumTeams
                 .Include(t => t.Members)
                 .ThenInclude(m => m.User)
-                .Where(t => t.Members.Any(m => m.User.Id == userId) && t.Id == request.id)
+                .Where(t => t.Members.Any(m => m.User.Id == userId) && t.Id == request.TeamId)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (team == null)

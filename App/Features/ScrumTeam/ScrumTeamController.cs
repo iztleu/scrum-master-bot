@@ -1,4 +1,6 @@
+using App.Features.ScrumTeam.Models;
 using App.Features.ScrumTeam.Requests;
+using App.Services;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,27 +12,29 @@ namespace App.Features.ScrumTeam;
 public class ScrumTeamController : Controller
 {
     private readonly IMediator _mediator;
+    private readonly CurrentAuthInfoSource _currentAuthInfoSource;
 
-    public ScrumTeamController(IMediator mediator)
+    public ScrumTeamController(IMediator mediator, CurrentAuthInfoSource currentAuthInfoSource)
     {
         _mediator = mediator;
+        _currentAuthInfoSource = currentAuthInfoSource;
     }
 
-    //create team endpoint
     [HttpPost]
     [Authorize]
-    public async Task<IActionResult> CreateTeam(CreateScrumTeam.Request request)
+    public async Task<IActionResult> CreateTeam(CreateTeamRequest request, CancellationToken cancellationToken)
     {
-        var team = await _mediator.Send(request);
+        var userId = _currentAuthInfoSource.GetUserId();
+        var team = await _mediator.Send(new CreateScrumTeam.Request(userId, request.TeamName), cancellationToken);
         return Created($"/scrum-team/{team.Id}", team);
     }
     
-    //get team endpoint by id
     [HttpGet("{id}")]
     [Authorize]
-    public async Task<IActionResult> GetTeamById(int id)
+    public async Task<IActionResult> GetTeamById(int id, CancellationToken cancellationToken)
     {
-        var team = await _mediator.Send(new GetScrumTeamById.Request(id));
+        var userId = _currentAuthInfoSource.GetUserId();
+        var team = await _mediator.Send(new GetScrumTeamById.Request(userId,id), cancellationToken);
         return Ok(team);
     }
 }

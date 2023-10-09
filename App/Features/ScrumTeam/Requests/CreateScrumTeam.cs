@@ -12,7 +12,7 @@ namespace App.Features.ScrumTeam.Requests;
 
 public class CreateScrumTeam
 {
-    public record Request(string Name) : IRequest<Response>;
+    public record Request(int UserId, string Name) : IRequest<Response>;
 
     public record Response(int Id);
 
@@ -34,19 +34,15 @@ public class CreateScrumTeam
     public class Handler : IRequestHandler<Request, Response>
     {
         private readonly ScrumMasterDbContext _dbContext;
-        private readonly CurrentAuthInfoSource _currentAuthInfoSource;
 
-        public Handler(ScrumMasterDbContext dbContext, CurrentAuthInfoSource currentAuthInfoSource)
+        public Handler(ScrumMasterDbContext dbContext)
         {
             _dbContext = dbContext;
-            _currentAuthInfoSource = currentAuthInfoSource;
         }
 
         public async Task<Response> Handle(Request request, CancellationToken cancellationToken)
         {
-
-            var userId = _currentAuthInfoSource.GetUserId();
-            var user = await _dbContext.Users.FindAsync(userId, cancellationToken);
+            var user = await _dbContext.Users.FindAsync(request.UserId, cancellationToken);
             if (user == null)
             {
                 throw new LogicConflictException( "User not found", UserNotFound);

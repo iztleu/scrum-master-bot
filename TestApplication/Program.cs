@@ -6,15 +6,8 @@ using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
-Console.WriteLine("Hello, World!");
+
 using CancellationTokenSource cts = new ();
-
-Enumerable.Range(0, 10).ToList().ForEach(x =>
-{
-    var verifyCode = new Random().Next(0, 9999);
-    Console.WriteLine(verifyCode.ToString("0000"));
-});
-
 
 var ReceiverMessage = Task.Run(async () =>
     {
@@ -44,7 +37,7 @@ var SenderMessage = Task.Run(async () =>
     while (!cts.IsCancellationRequested)
     {
         await botClient.SendTextMessageAsync(
-            chatId: 485634926,
+            chatId: "@iztleu",
             text: $"Вам отправили собщение");
         await Task.Delay(5000);
     }

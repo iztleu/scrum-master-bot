@@ -1,5 +1,6 @@
 using Database;
 using Domain.Models;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
@@ -17,12 +18,15 @@ public class UpdateHandler : IUpdateHandler
     private readonly ITelegramBotClient _botClient;
     private readonly ILogger<UpdateHandler> _logger;
     private readonly ScrumMasterDbContext _dbContext;
+    private readonly IMediator _mediator;
     
-    public UpdateHandler(ITelegramBotClient botClient, ILogger<UpdateHandler> logger, ScrumMasterDbContext dbContext)
+    public UpdateHandler(ITelegramBotClient botClient, ILogger<UpdateHandler> logger, ScrumMasterDbContext dbContext, 
+        IMediator mediator)
     {
         _botClient = botClient;
         _logger = logger;
         _dbContext = dbContext;
+        _mediator = mediator;
     }
 
     public async Task HandleUpdateAsync(ITelegramBotClient _, Update update, CancellationToken cancellationToken)
@@ -337,7 +341,8 @@ public class UpdateHandler : IUpdateHandler
             {
                 TelegramUserId = message.From.Id,
                 UserName = message.From.Username,
-                ChatId = message.Chat.Id
+                ChatId = message.Chat.Id,
+                VerifyCode = string.Empty
             };
             await _dbContext.Users.AddAsync(user, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
