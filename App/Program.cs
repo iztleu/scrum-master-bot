@@ -1,3 +1,4 @@
+using App;
 using App.Services;
 using Database;
 using Microsoft.EntityFrameworkCore;
@@ -7,12 +8,8 @@ using TelegramBot;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-if (builder.Environment.IsDevelopment())
-{
-    Console.WriteLine("Development environment");
-}
-
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -25,17 +22,11 @@ builder.Services.AddHttpClient("telegram_bot_client")
         return new TelegramBotClient(options, httpClient);
     });
 
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
+builder.AddDbContext();
+
 builder.Services.AddScoped<IUpdateHandler, UpdateHandler>();
 builder.Services.AddScoped<IReceiverService, ReceiverService>();
 builder.Services.AddHostedService<TelegramBotService>();
-
-builder.Services
-    .AddDbContext<ScrumMasterDbContext>(
-        optionsBuilder => optionsBuilder.UseNpgsql(
-            builder.Configuration.GetConnectionString("DefaultConnection"),
-            npgsqlOptions => npgsqlOptions.UseAdminDatabase("postgres")));
 
 
 var app = builder.Build();
@@ -53,4 +44,19 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+RunMigration(app);
+
 app.Run();
+
+
+void RunMigration(WebApplication webApplication)
+{
+    using (var scope = webApplication.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider
+            .GetRequiredService<ScrumMasterDbContext>();
+        
+        if (dbContext.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory")
+            dbContext.Database.Migrate();
+    }
+}
