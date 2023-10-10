@@ -9,11 +9,11 @@ using static App.Features.ScrumTeam.Errors.ScrumTeamValidationErrors;
 
 namespace App.Features.ScrumTeam.Requests;
 
-public class GetScrumTeamById
+public class GetAllMyScrumTeam
 {
-    public record Request(int UserId, string TeamName) : IRequest<Response>;
+    public record Request(int UserId) : IRequest<Response>;
 
-    public record Response(Team Team);
+    public record Response(Team[] teams);
     
     public class Handler : IRequestHandler<Request, Response>
     {
@@ -29,18 +29,18 @@ public class GetScrumTeamById
         public async Task<Response> Handle(Request request, CancellationToken cancellationToken)
         {
             var userId = _currentAuthInfoSource.GetUserId();
-            var team = await _dbContext.ScrumTeams
+            var teams = await _dbContext.ScrumTeams
                 .Include(t => t.Members)
                 .ThenInclude(m => m.User)
-                .Where(t => t.Members.Any(m => m.User.Id == userId && m.Status == Status.Accepted) && t.Name == request.TeamName)
-                .FirstOrDefaultAsync(cancellationToken);
+                .Where(t => t.Members.Any(m => m.User.Id == userId && m.Status == Status.Accepted))
+                .ToArrayAsync(cancellationToken: cancellationToken);
 
-            if (team == null)
+            if (teams == null)
             {
                 throw new ValidationErrorsException(string.Empty, "Team not found", TeamNotFound);
             }
             
-            return new Response(team);
+            return new Response(teams);
         }
     }
 }

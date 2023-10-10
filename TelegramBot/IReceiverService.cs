@@ -1,6 +1,6 @@
-namespace TelegramBot;
-
-public interface IReceiverService
-{
-    Task ReceiveAsync(CancellationToken stoppingToken);
-}
+// namespace TelegramBot;
+//
+// public interface IReceiverService
+// {
+//     Task ReceiveAsync(CancellationToken stoppingToken);
+// }

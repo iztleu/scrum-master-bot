@@ -1,5 +1,3 @@
-using TelegramBot;
-
 namespace App.Services;
 
 public class TelegramBotService : BackgroundService

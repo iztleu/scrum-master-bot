@@ -9,7 +9,9 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
-using TelegramBot;
+using IReceiverService = App.Services.IReceiverService;
+using ReceiverService = App.Services.ReceiverService;
+using UpdateHandler = App.Services.UpdateHandler;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +40,7 @@ builder.Services.AddHttpClient("telegram_bot_client")
     });
 
 builder.AddDbContext();
+builder.Services.AddTransient<ActionService>();
 builder.Services.AddScoped<IUpdateHandler, UpdateHandler>();
 builder.Services.AddScoped<IReceiverService, ReceiverService>();
 builder.Services.AddHostedService<TelegramBotService>();

@@ -14,7 +14,7 @@ public class CreateScrumTeam
 {
     public record Request(int UserId, string Name) : IRequest<Response>;
 
-    public record Response(int Id);
+    public record Response(string Name);
 
     public class RequestValidator: AbstractValidator<Request>
     {
@@ -56,13 +56,14 @@ public class CreateScrumTeam
                 {
                     User = user,
                     Role = Role.ScrumMaster,
+                    Status = Status.Accepted
                 }}
             };
 
             await _dbContext.ScrumTeams.AddAsync(scrumTeam, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
 
-            return new Response(scrumTeam.Id);
+            return new Response(scrumTeam.Name);
         }
     }
 }
