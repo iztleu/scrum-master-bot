@@ -24,7 +24,7 @@ public class ScrumTeamController : Controller
     [Authorize]
     public async Task<IActionResult> CreateTeam(CreateTeamRequest request, CancellationToken cancellationToken)
     {
-        var userId = _currentAuthInfoSource.GetUserId();
+        var userId = _currentAuthInfoSource.GetTelegramUserId();
         var team = await _mediator.Send(new CreateScrumTeam.Request(userId, request.TeamName), cancellationToken);
         return Created($"/scrum-team/{team.Name}", team);
     }
@@ -33,8 +33,8 @@ public class ScrumTeamController : Controller
     [Authorize]
     public async Task<IActionResult> GetTeamById(string name, CancellationToken cancellationToken)
     {
-        var userId = _currentAuthInfoSource.GetUserId();
-        var team = await _mediator.Send(new GetScrumTeamById.Request(userId, name), cancellationToken);
+        var userId = _currentAuthInfoSource.GetTelegramUserId();
+        var team = await _mediator.Send(new GetScrumTeamByName.Request(userId, name), cancellationToken);
         return Ok(team);
     }
     
@@ -42,7 +42,7 @@ public class ScrumTeamController : Controller
     [Authorize]
     public async Task<IActionResult> GetMyTeams(int id, CancellationToken cancellationToken)
     {
-        var userId = _currentAuthInfoSource.GetUserId();
+        var userId = _currentAuthInfoSource.GetTelegramUserId();
         var teams = await _mediator.Send(new GetAllMyScrumTeam.Request(userId), cancellationToken);
         return Ok(teams);
     }
@@ -51,7 +51,7 @@ public class ScrumTeamController : Controller
     [Authorize]
     public async Task<IActionResult> JoinToTeam([FromQuery] string teamName, CancellationToken cancellationToken)
     {
-        var userId = _currentAuthInfoSource.GetUserId();
+        var userId = _currentAuthInfoSource.GetTelegramUserId();
         await _mediator.Send(new JoinToScrumTeam.Request(userId, teamName), cancellationToken);
         return Ok();
     }
@@ -60,7 +60,7 @@ public class ScrumTeamController : Controller
     [Authorize]
     public async Task<IActionResult> AcceptInviteToTeam([FromQuery] int memberId, CancellationToken cancellationToken)
     {
-        var userId = _currentAuthInfoSource.GetUserId();
+        var userId = _currentAuthInfoSource.GetTelegramUserId();
         await _mediator.Send(new AcceptInviteToScrumTeam.Request(userId, memberId), cancellationToken);
         return Ok();
     }
@@ -69,7 +69,7 @@ public class ScrumTeamController : Controller
     [Authorize]
     public async Task<IActionResult> DeclineInviteToTeam([FromQuery] int memberId, CancellationToken cancellationToken)
     {
-        var userId = _currentAuthInfoSource.GetUserId();
+        var userId = _currentAuthInfoSource.GetTelegramUserId();
         await _mediator.Send(new DeclineInviteToScrumTeam.Request(userId, memberId), cancellationToken);
         return Ok();
     }

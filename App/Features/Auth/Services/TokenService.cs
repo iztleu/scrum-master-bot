@@ -18,7 +18,7 @@ public class TokenService
 
     public string CreateAccessToken(User user)
     {
-        return CreateAccessToken(user.Id, user.UserName);
+        return CreateAccessToken(user.TelegramUserId, user.UserName);
     }
     
     public string CreateAccessToken(long userId, string userName)

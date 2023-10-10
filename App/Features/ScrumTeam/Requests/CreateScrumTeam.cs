@@ -12,7 +12,7 @@ namespace App.Features.ScrumTeam.Requests;
 
 public class CreateScrumTeam
 {
-    public record Request(int UserId, string Name) : IRequest<Response>;
+    public record Request(long TelegramUserId, string Name) : IRequest<Response>;
 
     public record Response(string Name);
 
@@ -42,7 +42,8 @@ public class CreateScrumTeam
 
         public async Task<Response> Handle(Request request, CancellationToken cancellationToken)
         {
-            var user = await _dbContext.Users.FindAsync(request.UserId, cancellationToken);
+            var user = await _dbContext.Users.Where(u => u.TelegramUserId == request.TelegramUserId)
+                .FirstOrDefaultAsync(cancellationToken);
             if (user == null)
             {
                 throw new LogicConflictException( "User not found", UserNotFound);

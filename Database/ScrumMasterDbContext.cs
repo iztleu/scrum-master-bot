@@ -20,7 +20,7 @@ public class ScrumMasterDbContext: DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Action>(entity => {
-            entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasIndex(e => e.TelegramUserId).IsUnique();
         });
     }
 }

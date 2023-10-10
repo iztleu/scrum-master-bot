@@ -5,11 +5,9 @@ namespace Domain.Models;
 public class Action
 {
     public long Id { get; set; }
-
-    [Required]
-    public int UserId { get; set; }
     
-    public User User { get; set; }
+    [Required]
+    public long TelegramUserId { get; set; }
 
     [Required]
     public ActionType Type { get; set; }

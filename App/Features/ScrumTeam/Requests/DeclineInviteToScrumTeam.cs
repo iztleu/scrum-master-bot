@@ -11,17 +11,17 @@ namespace App.Features.ScrumTeam.Requests;
 
 public class DeclineInviteToScrumTeam
 {
-        public record Request(int UserId, int MemberId) : IRequest;
+        public record Request(long TelegramUserId, int MemberId) : IRequest;
     
     public class RequestValidator: AbstractValidator<Request>
     {
         public RequestValidator(ScrumMasterDbContext dbContext)
         {
-            RuleFor(x => x.UserId)
+            RuleFor(x => x.TelegramUserId)
                 .Cascade(CascadeMode.Stop)
                 .MustAsync(async (x, token) =>
                 {
-                    var userExists = await dbContext.Users.AnyAsync(user => user.Id == x, token);
+                    var userExists = await dbContext.Users.AnyAsync(user => user.TelegramUserId == x, token);
                     return userExists;
                 }).WithErrorCode(UserNotFound);
             
@@ -56,7 +56,7 @@ public class DeclineInviteToScrumTeam
                 .ThenInclude(m => m.User)
                 .Where(t => t.Members
                     .Any(m => m.Id == request.MemberId && m.Status == Status.Invited) && t.Members
-                    .Any(m => m.User.Id == request.UserId && m.Role == Role.ScrumMaster))
+                    .Any(m => m.User!.TelegramUserId == request.TelegramUserId && m.Role == Role.ScrumMaster))
                 .FirstOrDefaultAsync(cancellationToken);
             
             if (team == null)
@@ -69,7 +69,7 @@ public class DeclineInviteToScrumTeam
            
           
             await _telegramBotClient.SendTextMessageAsync(
-                member.User.ChatId,
+                member.User!.ChatId,
                 $"You declined invitation to team {team.Name}",
                 cancellationToken: cancellationToken
             );

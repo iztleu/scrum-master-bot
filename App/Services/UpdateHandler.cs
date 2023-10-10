@@ -2,7 +2,6 @@ using App.Features.ScrumTeam.Requests;
 using Database;
 using Domain.Models;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
@@ -48,15 +47,14 @@ public class UpdateHandler : IUpdateHandler
         if (message.Text is not { } messageText)
             return;
 
-        var user = new UserModel();//await GetUser(message, cancellationToken);
-        var userAction = await GetAction(user, cancellationToken);
+        var userAction = message.From != null? await GetAction(message.From.Id, cancellationToken):null;
 
         if (userAction is not null && messageText != Buttons.StopAction)
         {
             var actionResult = userAction.Type switch
             {
-                ActionType.CreateScrumTeam => DoActionCreateScrumTeam(_botClient, userAction, user, message, cancellationToken),
-                ActionType.ShowTeam => DoActionShowTeam(_botClient, userAction, user, message, cancellationToken),
+                ActionType.CreateScrumTeam => DoActionCreateScrumTeam(_botClient, userAction, message, cancellationToken),
+                ActionType.ShowTeam => DoActionShowTeam(_botClient, userAction, message, cancellationToken),
                 _ => throw new ArgumentOutOfRangeException(nameof(ActionType))
             };
             
@@ -65,77 +63,16 @@ public class UpdateHandler : IUpdateHandler
         
         var action = messageText switch
         {            
-            Buttons.Start => Start(_botClient, message, user, cancellationToken),
-            Buttons.CreateScrumTeam => CreateScrumTeam(_botClient, message, user, cancellationToken),
-            Buttons.ShowMyScrumTeam => ShowMyScrumTeam(_botClient, message, user, cancellationToken),
-            Buttons.StopAction => StopAction(_botClient, userAction, user, message, cancellationToken),
-            _ => Start(_botClient, message, user, cancellationToken)
+            Buttons.Start => Start(_botClient, message, cancellationToken),
+            Buttons.CreateScrumTeam => CreateScrumTeam(_botClient, message, cancellationToken),
+            Buttons.ShowMyScrumTeam => ShowMyScrumTeam(_botClient, message, cancellationToken),
+            Buttons.StopAction => StopAction(_botClient, userAction, message, cancellationToken),
+            _ => Start(_botClient, message, cancellationToken)
         };
-
-        async Task<Message> ShowMyScrumTeam(ITelegramBotClient botClient, Message message, UserModel user, CancellationToken cancellationToke)
-        {
-            var response = await _mediator.Send(new GetAllMyScrumTeam.Request(user.Id), cancellationToken);
-
-            ReplyKeyboardMarkup replyKeyboardMarkup;
-            if (response.teams.Length == 0)
-            {
-                replyKeyboardMarkup = new(
-                    new[]
-                    {
-                        new KeyboardButton[] { Buttons.CreateScrumTeam, Buttons.ShowMyScrumTeam},
-                    })
-                {
-                    ResizeKeyboard = true
-                };
-
-                return await botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
-                    replyMarkup: replyKeyboardMarkup,
-                    text: $"У вас нету команд",
-                    cancellationToken: cancellationToken);
-            }
-            
-            replyKeyboardMarkup = new (response.teams.Select(t => new KeyboardButton[] { t.Name })){
-                ResizeKeyboard = true
-            };;
-
-
-            await _actionService.CreateActionAsync(new()
-            {
-                UserId = user.Id,
-                Type = ActionType.ShowTeam
-            });
-            
-            return await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: $"Выберите команду",
-                replyMarkup: replyKeyboardMarkup,
-                cancellationToken: cancellationToken);
-        }
-
-        async Task<Message> StopAction(ITelegramBotClient botClient, Action action, UserModel user, Message message, CancellationToken cancellationToken)
-        {
-            await _actionService.DeleteActionAsync(action);
-            
-            ReplyKeyboardMarkup replyKeyboardMarkup = new(
-                new[]
-                {
-                    new KeyboardButton[] { Buttons.CreateScrumTeam},
-                })
-            {
-                ResizeKeyboard = true
-            };
-            
-            return await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: $"Действие отменено",
-                replyMarkup: replyKeyboardMarkup,
-                cancellationToken: cancellationToken);
-        }  
         
-        async Task<Message> Start(ITelegramBotClient botClient, Message message, UserModel user, CancellationToken cancellationToken)
+        async Task<Message> Start(ITelegramBotClient botClient, Message message, CancellationToken cancellationToken)
         {
-            var response = await _mediator.Send(new GetAllMyScrumTeam.Request(user.Id), cancellationToken);
+            var response = await _mediator.Send(new GetAllMyScrumTeam.Request(message.GetTelegramId()), cancellationToken);
 
             var keyButtons = new List<KeyboardButton> { Buttons.CreateScrumTeam };
             if (response.teams.Length != 0)
@@ -151,7 +88,7 @@ public class UpdateHandler : IUpdateHandler
             {
                 ResizeKeyboard = true
             };
-
+            
             return await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
                 text: $"Здравствуйте, {message.From.Username}!",
@@ -159,11 +96,11 @@ public class UpdateHandler : IUpdateHandler
                 cancellationToken: cancellationToken);
         }
 
-        async Task<Message> CreateScrumTeam(ITelegramBotClient botClient, Message message, UserModel user, CancellationToken cancellationToken)
+        async Task<Message> CreateScrumTeam(ITelegramBotClient botClient, Message message, CancellationToken cancellationToken)
         {
             await _actionService.CreateActionAsync(new()
             {
-                UserId = user.Id,
+                TelegramUserId = message.GetTelegramId(),
                 Type = ActionType.CreateScrumTeam
             });
             
@@ -183,21 +120,114 @@ public class UpdateHandler : IUpdateHandler
                 cancellationToken: cancellationToken);
         }
         
-        async Task<Message> DoActionCreateScrumTeam(ITelegramBotClient botClient, Action action, UserModel user, Message message,
+        async Task<Message> ShowMyScrumTeam(ITelegramBotClient botClient, Message message, CancellationToken cancellationToke)
+        {
+            var response = await _mediator.Send(new GetAllMyScrumTeam.Request(message.GetTelegramId()), cancellationToken);
+
+            ReplyKeyboardMarkup replyKeyboardMarkup;
+            if (response.teams.Length == 0)
+            {
+                replyKeyboardMarkup = new(
+                    new[]
+                    {
+                        new KeyboardButton[] { Buttons.CreateScrumTeam, Buttons.ShowMyScrumTeam},
+                    })
+                {
+                    ResizeKeyboard = true
+                };
+
+                return await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    replyMarkup: replyKeyboardMarkup,
+                    text: $"У вас нету команд",
+                    cancellationToken: cancellationToken);
+            }
+
+            var teamButtons = response.teams.Select(t => new KeyboardButton[] { t.Name }).ToList();
+            
+            teamButtons.Add(new KeyboardButton[] { Buttons.StopAction});
+            
+            replyKeyboardMarkup = new (teamButtons){
+                ResizeKeyboard = true
+            };
+            
+            await _actionService.CreateActionAsync(new()
+            {
+                TelegramUserId = message.GetTelegramId(),
+                Type = ActionType.ShowTeam
+            });
+            
+            return await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"Выберите команду",
+                replyMarkup: replyKeyboardMarkup,
+                cancellationToken: cancellationToken);
+        }
+        
+        async Task<Message> StopAction(ITelegramBotClient botClient, Action? action, Message message, CancellationToken cancellationToken)
+        {
+            if (action is not null)
+                await _actionService.DeleteActionAsync(action);
+            
+            var response = await _mediator.Send(new GetAllMyScrumTeam.Request(message.GetTelegramId()), cancellationToken);
+
+            var keyButtons = new List<KeyboardButton> { Buttons.CreateScrumTeam };
+            if (response.teams.Length != 0)
+            {
+                keyButtons.Add(new KeyboardButton(Buttons.ShowMyScrumTeam));
+            }
+            
+            ReplyKeyboardMarkup replyKeyboardMarkup = new(
+                new[]
+                {
+                    keyButtons
+                })
+            {
+                ResizeKeyboard = true
+            };
+            
+            return await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"Действие отменено",
+                replyMarkup: replyKeyboardMarkup,
+                cancellationToken: cancellationToken);
+        }  
+        
+        async Task<Message> DoActionCreateScrumTeam(ITelegramBotClient botClient, Action action, Message message,
             CancellationToken cancellationToken)
         {
-            var createResponse = await _mediator.Send(new CreateScrumTeam.Request(user.Id, message.Text), cancellationToken);
+            var createResponse = await _mediator.Send(new CreateScrumTeam.Request(message.GetTelegramId(), message.Text), cancellationToken);
+            
+            await _actionService.DeleteActionAsync(action);
+            
+            var response = await _mediator.Send(new GetAllMyScrumTeam.Request(message.GetTelegramId()), cancellationToken);
+
+            var keyButtons = new List<KeyboardButton> { Buttons.CreateScrumTeam };
+            if (response.teams.Length != 0)
+            {
+                keyButtons.Add(new KeyboardButton(Buttons.ShowMyScrumTeam));
+            }
+            
+            ReplyKeyboardMarkup replyKeyboardMarkup = new(
+                new[]
+                {
+                    keyButtons
+                })
+            {
+                ResizeKeyboard = true
+            };
             
             return await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
                 text: $"Команда {createResponse.Name} успешно создана",
+                replyMarkup: replyKeyboardMarkup,
                 cancellationToken: cancellationToken);
         }
         
-        async Task<Message> DoActionShowTeam(ITelegramBotClient botClient, Action action, UserModel user, Message message,
+        async Task<Message> DoActionShowTeam(ITelegramBotClient botClient, Action action, Message message,
             CancellationToken cancellationToken)
         {
-            var team = (await _mediator.Send(new GetScrumTeamById.Request(user.Id, message.Text), cancellationToken)).Team;
+            var team = (await _mediator.Send(new GetScrumTeamByName.Request(message.GetTelegramId(), message.Text), cancellationToken)).Team;
 
             List<List<InlineKeyboardButton>> inlineKeyboardButtons = new();
             var row = 0;
@@ -216,8 +246,6 @@ public class UpdateHandler : IUpdateHandler
                 var name = member.Role == Role.ScrumMaster ? $"{member.User.UserName} {member.Role}" : member.User.UserName;
                 inlineKeyboardButtons[row].Add(InlineKeyboardButton.WithUrl(name, $"https://t.me/{member.User.UserName}"));
             }
-            
-            await _actionService.DeleteActionAsync(action);
             
             return await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
@@ -266,35 +294,10 @@ public class UpdateHandler : IUpdateHandler
         if (exception is RequestException)
             await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
     }
-
-    // private async Task<UserModel> GetUser(Message message, CancellationToken cancellationToken)
-    // {
-    //     var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.TelegramUserId == message.From.Id, cancellationToken);
-    //     if (user is null)
-    //     {
-    //         user = new()
-    //         {
-    //             TelegramUserId = message.From.Id,
-    //             UserName = message.From.Username,
-    //             ChatId = message.Chat.Id,
-    //             VerifyCode = string.Empty
-    //         };
-    //         await _dbContext.Users.AddAsync(user, cancellationToken);
-    //         await _dbContext.SaveChangesAsync(cancellationToken);
-    //     }
-    //         
-    //     if(user.ChatId != message.Chat.Id)
-    //     {
-    //         user.ChatId = message.Chat.Id;
-    //         await _dbContext.SaveChangesAsync(cancellationToken);
-    //     }
-    //
-    //     return user;
-    // }
     
-    private async Task<Action?> GetAction(UserModel user, CancellationToken cancellationToken)
+    private async Task<Action?> GetAction(long telegramUserId, CancellationToken cancellationToken)
     {
-        return (await _actionService.GetActionsAsync(user.Id, cancellationToken)).FirstOrDefault();
+        return (await _actionService.GetActionsAsync(telegramUserId, cancellationToken)).FirstOrDefault();
     }
 }
 
@@ -306,4 +309,12 @@ public static class Buttons
     public const string ShowMyScrumTeam = "Показать мои Scrum команды";
     public const string JoinScrumTeam = "Присоединиться к Scrum команде";
     public const string LeaveScrumTeam = "Покинуть Scrum команду";
+}
+
+public static class Extensions
+{
+    public static long GetTelegramId(this Message message)
+    {
+        return message.From?.Id??0;
+    }
 }

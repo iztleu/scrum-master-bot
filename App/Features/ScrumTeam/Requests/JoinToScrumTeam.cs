@@ -12,17 +12,17 @@ namespace App.Features.ScrumTeam.Requests;
 
 public class JoinToScrumTeam
 {
-    public record Request(int UserId, string TeamName) : IRequest;
+    public record Request(long TelegramUserId, string TeamName) : IRequest;
     
     public class RequestValidator: AbstractValidator<Request>
     {
         public RequestValidator(ScrumMasterDbContext dbContext)
         {
-            RuleFor(x => x.UserId)
+            RuleFor(x => x.TelegramUserId)
                 .Cascade(CascadeMode.Stop)
                 .MustAsync(async (x, token) =>
                 {
-                    var userExists = await dbContext.Users.AnyAsync(user => user.Id == x, token);
+                    var userExists = await dbContext.Users.AnyAsync(user => user.TelegramUserId == x, token);
                     return userExists;
                 }).WithErrorCode(UserNotFound);
             
@@ -62,14 +62,14 @@ public class JoinToScrumTeam
 
             var user = await _dbContext
                 .Users
-                .Where(u => u.Id == request.UserId)
+                .Where(u => u.TelegramUserId == request.TelegramUserId)
                 .FirstOrDefaultAsync(cancellationToken);
             if (user == null)
             {
                 throw new LogicConflictException( "User not found", UserNotFound);
             }
 
-            if (team.Members.Any(m => m.User!.Id == request.UserId))
+            if (team.Members.Any(m => m.User!.TelegramUserId == request.TelegramUserId))
             {
                 throw new LogicConflictException( "User already in team", UserAlreadyInTeam);
             }

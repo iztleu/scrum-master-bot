@@ -9,30 +9,27 @@ using static App.Features.ScrumTeam.Errors.ScrumTeamValidationErrors;
 
 namespace App.Features.ScrumTeam.Requests;
 
-public class GetScrumTeamById
+public class GetScrumTeamByName
 {
-    public record Request(int UserId, string TeamName) : IRequest<Response>;
+    public record Request(long TelegramUserId, string TeamName) : IRequest<Response>;
 
     public record Response(Team Team);
     
     public class Handler : IRequestHandler<Request, Response>
     {
         private readonly ScrumMasterDbContext _dbContext;
-        private readonly CurrentAuthInfoSource _currentAuthInfoSource;
 
-        public Handler(ScrumMasterDbContext dbContext, CurrentAuthInfoSource currentAuthInfoSource)
+        public Handler(ScrumMasterDbContext dbContext)
         {
             _dbContext = dbContext;
-            _currentAuthInfoSource = currentAuthInfoSource;
         }
 
         public async Task<Response> Handle(Request request, CancellationToken cancellationToken)
         {
-            var userId = _currentAuthInfoSource.GetUserId();
             var team = await _dbContext.ScrumTeams
-                .Include(t => t.Members)
+                .Include(t => t.Members.Where(m => m.Status == Status.Accepted))
                 .ThenInclude(m => m.User)
-                .Where(t => t.Members.Any(m => m.User.Id == userId && m.Status == Status.Accepted) && t.Name == request.TeamName)
+                .Where(t => t.Members.Any(m => m.User!.TelegramUserId == request.TelegramUserId) && t.Name == request.TeamName)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (team == null)

@@ -12,13 +12,13 @@ public class CurrentAuthInfoSource
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public int GetUserId()
+    public long GetTelegramUserId()
     {
         var nameIdentifier = _httpContextAccessor.HttpContext?.User.Claims
             .FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
 
-        if (int.TryParse(nameIdentifier, out var userId))
-            return userId;
+        if (int.TryParse(nameIdentifier, out var telegramUserId))
+            return telegramUserId;
 
         throw new ValidationErrorsException(string.Empty, "Could not get user id from claims.", string.Empty);
     }

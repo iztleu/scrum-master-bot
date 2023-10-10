@@ -21,17 +21,17 @@ public class ActionService
         return action.Id;
     }
     
-    public async Task<Action[]> GetActionsAsync(int userId, CancellationToken ct = default)
+    public async Task<Action[]> GetActionsAsync(long telegramUserId, CancellationToken ct = default)
     {
-        return await _dbContext.Actions
-            .Where(a => a.UserId == userId)
+        return await _dbContext.Actions   
+            .Where(a => a.TelegramUserId == telegramUserId)
             .ToArrayAsync(ct);
     }
     
-    public async Task<Action?> GetActionAsync(int userId, long actionId, CancellationToken ct = default)
+    public async Task<Action?> GetActionAsync(long telegramUserId, long actionId, CancellationToken ct = default)
     {
         return await _dbContext.Actions
-            .Where(a => a.UserId == userId && a.Id == actionId)
+            .Where(a => a.TelegramUserId == telegramUserId && a.Id == actionId)
             .FirstOrDefaultAsync(ct);
     }
     

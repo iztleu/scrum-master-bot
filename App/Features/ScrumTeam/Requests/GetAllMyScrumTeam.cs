@@ -11,28 +11,26 @@ namespace App.Features.ScrumTeam.Requests;
 
 public class GetAllMyScrumTeam
 {
-    public record Request(int UserId) : IRequest<Response>;
+    public record Request(long TelegramUserId) : IRequest<Response>;
 
     public record Response(Team[] teams);
     
     public class Handler : IRequestHandler<Request, Response>
     {
         private readonly ScrumMasterDbContext _dbContext;
-        private readonly CurrentAuthInfoSource _currentAuthInfoSource;
 
-        public Handler(ScrumMasterDbContext dbContext, CurrentAuthInfoSource currentAuthInfoSource)
+        public Handler(ScrumMasterDbContext dbContext)
         {
             _dbContext = dbContext;
-            _currentAuthInfoSource = currentAuthInfoSource;
         }
 
         public async Task<Response> Handle(Request request, CancellationToken cancellationToken)
         {
-            var userId = _currentAuthInfoSource.GetUserId();
             var teams = await _dbContext.ScrumTeams
                 .Include(t => t.Members)
                 .ThenInclude(m => m.User)
-                .Where(t => t.Members.Any(m => m.User.Id == userId && m.Status == Status.Accepted))
+                .Where(t => t.Members
+                    .Any(m => m.User!.TelegramUserId == request.TelegramUserId && m.Status == Status.Accepted))
                 .ToArrayAsync(cancellationToken: cancellationToken);
 
             if (teams == null)
