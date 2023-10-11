@@ -31,46 +31,28 @@ public class ScrumTeamController : Controller
     
     [HttpGet("{name}")]
     [Authorize]
-    public async Task<IActionResult> GetTeamById(string name, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetTeamByName(string name, CancellationToken cancellationToken)
     {
         var userId = _currentAuthInfoSource.GetTelegramUserId();
         var team = await _mediator.Send(new GetScrumTeamByName.Request(userId, name), cancellationToken);
         return Ok(team);
     }
     
-    [HttpGet()]
+    [HttpGet]
     [Authorize]
-    public async Task<IActionResult> GetMyTeams(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetMyTeams(CancellationToken cancellationToken)
     {
         var userId = _currentAuthInfoSource.GetTelegramUserId();
         var teams = await _mediator.Send(new GetAllMyScrumTeam.Request(userId), cancellationToken);
         return Ok(teams);
     }
     
-    [HttpGet("join-to-team")]
+    [HttpPut]
     [Authorize]
-    public async Task<IActionResult> JoinToTeam([FromQuery] string teamName, CancellationToken cancellationToken)
+    public async Task<IActionResult> RenameTeam([FromBody]RenameTeamRequest request, CancellationToken cancellationToken)
     {
         var userId = _currentAuthInfoSource.GetTelegramUserId();
-        await _mediator.Send(new JoinToScrumTeam.Request(userId, teamName), cancellationToken);
-        return Ok();
-    }
-    
-    [HttpGet("accept-invite")]
-    [Authorize]
-    public async Task<IActionResult> AcceptInviteToTeam([FromQuery] int memberId, CancellationToken cancellationToken)
-    {
-        var userId = _currentAuthInfoSource.GetTelegramUserId();
-        await _mediator.Send(new AcceptInviteToScrumTeam.Request(userId, memberId), cancellationToken);
-        return Ok();
-    }
-    
-    [HttpGet("decline-invite")]
-    [Authorize]
-    public async Task<IActionResult> DeclineInviteToTeam([FromQuery] int memberId, CancellationToken cancellationToken)
-    {
-        var userId = _currentAuthInfoSource.GetTelegramUserId();
-        await _mediator.Send(new DeclineInviteToScrumTeam.Request(userId, memberId), cancellationToken);
-        return Ok();
+        var team = await _mediator.Send(new RenameScrumTeam.Request(userId, request.OldTeamName, request.NewTeamName), cancellationToken);
+        return Ok(team);
     }
 }

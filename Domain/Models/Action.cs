@@ -19,4 +19,5 @@ public enum ActionType
 {
     CreateScrumTeam,
     ShowTeam,
+    JoinToScrumTeam,
 }

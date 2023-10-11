@@ -20,6 +20,15 @@ public class CreateScrumTeam
     {
         public RequestValidator(ScrumMasterDbContext dbContext)
         {
+            RuleFor(x => x.TelegramUserId)
+                .MustAsync(async (id, cancellationToken) =>
+                {
+                    var teamExist = await dbContext.ScrumTeams
+                        .AnyAsync(t => t.Owner.TelegramUserId == id, cancellationToken);
+                    return !teamExist;
+                })
+                .WithErrorCode(UserAlreadyHasTeam);
+            
             RuleFor(x => x.Name)
                 .NotEmpty()
                 .WithErrorCode(NameRequired)
@@ -53,12 +62,13 @@ public class CreateScrumTeam
             {
                 Name = request.Name,
                 CreatedAt = DateOnly.FromDateTime(DateTime.Now),
-                Members = new List<Member> {new ()
+                Members = new List<Domain.Models.Member> {new ()
                 {
                     User = user,
                     Role = Role.ScrumMaster,
                     Status = Status.Accepted
-                }}
+                }},
+                Owner = user
             };
 
             await _dbContext.ScrumTeams.AddAsync(scrumTeam, cancellationToken);

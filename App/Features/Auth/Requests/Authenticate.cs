@@ -3,7 +3,6 @@ using App.Features.Auth.Services;
 using Database;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Telegram.Bot;
 using FluentValidation;
 using static App.Features.Auth.Errors.AuthValidationErrors;
 

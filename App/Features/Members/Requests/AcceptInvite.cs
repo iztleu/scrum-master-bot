@@ -5,11 +5,11 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Telegram.Bot;
-using static App.Features.ScrumTeam.Errors.ScrumTeamValidationErrors;
+using static App.Features.Member.Errors.MembersValidationErrors;
 
-namespace App.Features.ScrumTeam.Requests;
+namespace App.Features.Members.Requests;
 
-public class AcceptInviteToScrumTeam
+public class AcceptInvite
 {
     public record Request(long TelegramUserId, int MemberId) : IRequest;
     
@@ -69,11 +69,17 @@ public class AcceptInviteToScrumTeam
            
           
             await _telegramBotClient.SendTextMessageAsync(
+                team.Members.FirstOrDefault(m => m.Role == Role.ScrumMaster)?.User.ChatId??member.User.ChatId,
+                $"User {member.User.UserName} has been accepted to the team {team.Name}",
+                cancellationToken: cancellationToken
+            );
+            
+            
+            await _telegramBotClient.SendTextMessageAsync(
                 member.User.ChatId,
                 $"You have been accepted to the team {team.Name}",
                 cancellationToken: cancellationToken
             );
-            
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
     }

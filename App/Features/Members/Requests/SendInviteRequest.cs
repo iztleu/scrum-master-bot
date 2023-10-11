@@ -1,4 +1,5 @@
 using App.Errors.Exceptions;
+using App.Services;
 using Database;
 using Domain.Models;
 using FluentValidation;
@@ -6,11 +7,11 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Telegram.Bot;
 using Telegram.Bot.Types.ReplyMarkups;
-using static App.Features.ScrumTeam.Errors.ScrumTeamValidationErrors;
+using static App.Features.Member.Errors.MembersValidationErrors;
 
-namespace App.Features.ScrumTeam.Requests;
+namespace App.Features.Members.Requests;
 
-public class JoinToScrumTeam
+public class SendInviteRequest
 {
     public record Request(long TelegramUserId, string TeamName) : IRequest;
     
@@ -60,6 +61,11 @@ public class JoinToScrumTeam
                 throw new LogicConflictException( "Team not found", TeamNotFound);
             }
 
+            if (team.Members.Any(m => m.User!.TelegramUserId == request.TelegramUserId))
+            {
+                throw new LogicConflictException( "User already in team", UserAlreadyInTeam);
+            }
+
             var user = await _dbContext
                 .Users
                 .Where(u => u.TelegramUserId == request.TelegramUserId)
@@ -68,11 +74,6 @@ public class JoinToScrumTeam
             {
                 throw new LogicConflictException( "User not found", UserNotFound);
             }
-
-            if (team.Members.Any(m => m.User!.TelegramUserId == request.TelegramUserId))
-            {
-                throw new LogicConflictException( "User already in team", UserAlreadyInTeam);
-            }
             
             var scrumMasterUser = team.Members.FirstOrDefault(m => m.Role == Role.ScrumMaster)?.User;
             if (scrumMasterUser == null)
@@ -80,7 +81,7 @@ public class JoinToScrumTeam
                 throw new LogicConflictException( "ScrumMaster not found", ScrumMasterNotFound);
             }
             
-            var newMembers = new Member
+            var newMembers = new Domain.Models.Member
             {
                 User = user,
                 Role = Role.Developer,
@@ -94,8 +95,8 @@ public class JoinToScrumTeam
                 $"User {user.UserName} want to join to your team {team.Name}",
                 replyMarkup: new InlineKeyboardMarkup(new List<InlineKeyboardButton>()
                 {
-                    InlineKeyboardButton.WithCallbackData("Accept", $"accept invite request {newMembers.Id}"),
-                    InlineKeyboardButton.WithCallbackData("Decline", $"decline invite request {newMembers.Id}"),
+                    InlineKeyboardButton.WithCallbackData("Accept", $"{CallbackQueryData.AcceptInviteRequest} {newMembers.Id}"),
+                    InlineKeyboardButton.WithCallbackData("Decline", $"{CallbackQueryData.DeclineInviteRequest} {newMembers.Id}"),
                 }),
                 cancellationToken: cancellationToken
             );

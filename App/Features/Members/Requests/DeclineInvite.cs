@@ -5,11 +5,11 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Telegram.Bot;
-using static App.Features.ScrumTeam.Errors.ScrumTeamValidationErrors;
+using static App.Features.Member.Errors.MembersValidationErrors;
 
-namespace App.Features.ScrumTeam.Requests;
+namespace App.Features.Members.Requests;
 
-public class DeclineInviteToScrumTeam
+public class DeclineInvite
 {
         public record Request(long TelegramUserId, int MemberId) : IRequest;
     
@@ -65,8 +65,12 @@ public class DeclineInviteToScrumTeam
             }
           
             var member = team.Members.FirstOrDefault(m => m.Id == request.MemberId);
-            member!.Status = Status.Declined;
-           
+          
+            await _telegramBotClient.SendTextMessageAsync(
+                team.Members.FirstOrDefault(m => m.Role == Role.ScrumMaster)?.User.ChatId??member.User.ChatId,
+                $"User {member.User!.UserName} declined invitation to team {team.Name}",
+                cancellationToken: cancellationToken
+            );
           
             await _telegramBotClient.SendTextMessageAsync(
                 member.User!.ChatId,
@@ -74,6 +78,7 @@ public class DeclineInviteToScrumTeam
                 cancellationToken: cancellationToken
             );
             
+            _dbContext.Remove(member);
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
     }

@@ -46,4 +46,13 @@ public class ActionService
         _dbContext.Actions.Remove(action);
         await _dbContext.SaveChangesAsync();
     }
+    
+    public async Task DeleteActionsAsync(long telegramUserId)
+    {
+        var actions = await _dbContext.Actions
+            .Where(a => a.TelegramUserId == telegramUserId)
+            .ToArrayAsync();
+        _dbContext.Actions.RemoveRange(actions);
+        await _dbContext.SaveChangesAsync();
+    }
 }

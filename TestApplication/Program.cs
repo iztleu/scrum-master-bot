@@ -37,8 +37,8 @@ var SenderMessage = Task.Run(async () =>
     while (!cts.IsCancellationRequested)
     {
         await botClient.SendTextMessageAsync(
-            chatId: "@iztleu",
-            text: $"Вам отправили собщение");
+            chatId: 485634926,
+            text: $"Вам отправили собщение \ud83e\udd37\u200d\u2642\ufe0f");
         await Task.Delay(5000);
     }
 });

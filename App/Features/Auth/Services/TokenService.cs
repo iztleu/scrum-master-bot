@@ -16,7 +16,7 @@ public class TokenService
         _jwtOptions = options.Value.Jwt;
     }
 
-    public string CreateAccessToken(User user)
+    public string CreateAccessToken(Domain.Models.User user)
     {
         return CreateAccessToken(user.TelegramUserId, user.UserName);
     }
