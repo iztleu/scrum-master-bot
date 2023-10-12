@@ -45,4 +45,13 @@ public class MemberController : Controller
         await _mediator.Send(new DeclineInvite.Request(userId, memberId), cancellationToken);
         return Ok();
     }
+    
+    [HttpPost("leave-team")]
+    [Authorize]
+    public async Task<IActionResult> LeaveTeam([FromQuery] string teamName, CancellationToken cancellationToken)
+    {
+        var userId = _currentAuthInfoSource.GetTelegramUserId();
+        await _mediator.Send(new LeaveTeam.Request(userId, teamName), cancellationToken);
+        return Ok();
+    }
 }

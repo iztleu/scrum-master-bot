@@ -66,10 +66,18 @@ public class RenameScrumTeam
         public async Task<Response> Handle(Request request, CancellationToken cancellationToken)
         {
             var team = await _dbContext.ScrumTeams
-                .Where(t => t.Name == request.OldTeamName).FirstAsync(cancellationToken);
+                .Include(t => t.Members)
+                .ThenInclude(m => m.User)
+                .Where(t => t.Name == request.OldTeamName)
+                .FirstAsync(cancellationToken);
             if (team == null)
             {
                 throw new ValidationErrorsException(string.Empty, "Team not found", TeamNotFound);
+            }
+            
+            if(team.Members.Any(m => m.User.TelegramUserId == request.TelegramUserId && m.Role != Role.ScrumMaster))
+            {
+                throw new ValidationErrorsException(string.Empty, "You are not scrum master", UserIsNotScrumMaster);
             }
             
             team.Name = request.NewTeamName;

@@ -185,10 +185,27 @@ public class UpdateHandler : IUpdateHandler
         {
             Buttons.RenameScrumTeam => await DoActionChooseRenameScrumTeam(_botClient, userAction, message, cancellationToken),
             Buttons.ShowMembers => await DoActionChooseShowMembers(_botClient, userAction, message, cancellationToken),
+            Buttons.LeaveScrumTeam => await DoActionChooseLeaveScrumTeam(_botClient, userAction, message, cancellationToken),
             _ => await UnknownAction(_botClient, userAction, message, cancellationToken)
         };
 
         return action;
+    }
+
+    private async Task<Message> DoActionChooseLeaveScrumTeam(ITelegramBotClient botClient, Action userAction, Message message, CancellationToken cancellationToken)
+    {
+        var teamName = userAction.AdditionInfo!.Split("=").Last();
+        await _mediator.Send(new LeaveTeam.Request(message.GetTelegramId(), teamName), cancellationToken);
+        
+        await _actionService.DeleteActionAsync(userAction);
+
+        var replyKeyboardMarkup = await CreateCommonButtonAsync(message.GetTelegramId(), cancellationToken);
+
+        return await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"Вы покинули команду {teamName}",
+            replyMarkup: replyKeyboardMarkup,
+            cancellationToken: cancellationToken);
     }
 
     private async Task<Message> DoActionChooseRenameScrumTeam(ITelegramBotClient botClient, Action userAction, Message message, CancellationToken cancellationToken)
@@ -423,7 +440,7 @@ public class UpdateHandler : IUpdateHandler
     private async Task<Message> DoActionShowAllTeam(ITelegramBotClient botClient, Action action, Message message,
         CancellationToken cancellationToken)
     {
-        var keyButtonsL1 = new List<KeyboardButton> { Buttons.RenameScrumTeam, Buttons.ShowMembers};
+        var keyButtonsL1 = new List<KeyboardButton> { Buttons.RenameScrumTeam, Buttons.ShowMembers, Buttons.LeaveScrumTeam};
         var keyButtonsL2 = new List<KeyboardButton> { Buttons.StopAction };
         
         ReplyKeyboardMarkup replyKeyboardMarkup = new (new[]

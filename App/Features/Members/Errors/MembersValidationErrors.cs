@@ -10,5 +10,5 @@ public static class MembersValidationErrors
     public const string ScrumMasterNotFound = Prefix + "scrum_master_not_found";
     public const string MemberNotFound = Prefix + "member_not_found";
     public const string UserAlreadyInTeam = Prefix + "user_already_in_team";
-    
+    public const string OwnerCannotLeaveTeam = Prefix + "owner_cannot_leave_team";
 }
