@@ -2,7 +2,7 @@ namespace Domain.Models;
 
 public class Vote
 {
-    long Id { get; set; }
+    public long Id { get; set; }
     
     public Member Member { get; set; }
     
