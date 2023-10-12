@@ -17,6 +17,9 @@ public class ScrumMasterDbContext: DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<Action> Actions { get; set; }
     
+    public DbSet<Voting> Votings { get; set; }
+    
+    public DbSet<Vote> Votes { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Action>(entity => {

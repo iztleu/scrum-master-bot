@@ -17,7 +17,7 @@ public class AuthController : Controller
     }
     
     [AllowAnonymous]
-    [HttpGet("send-Verify-code")]
+    [HttpGet("send-verify-code")]
     public async Task<IActionResult> SendVerifyCode([FromQuery]SendVerifyCode.Request request,
         CancellationToken cancellationToken)
     {
