@@ -21,6 +21,7 @@ public class RenameScrumTeam
                 .MustAsync(async (id, cancellationToken) =>
                 {
                     var teamExist = await dbContext.ScrumTeams
+                        .AsNoTracking()
                         .AnyAsync(t => t.Members
                             .Any(m => m.User.TelegramUserId == id && m.Role == Role.ScrumMaster), 
                             cancellationToken);
@@ -32,7 +33,9 @@ public class RenameScrumTeam
                 .WithErrorCode(NameRequired)
                 .MustAsync(async (name, cancellationToken) =>
                 {
-                    var teamExist = await dbContext.ScrumTeams.AnyAsync(t => t.Name == name, 
+                    var teamExist = await dbContext.ScrumTeams
+                        .AsNoTracking()
+                        .AnyAsync(t => t.Name == name, 
                         cancellationToken);
                     return teamExist;
                 }).WithErrorCode(TeamNotFound);
@@ -42,7 +45,9 @@ public class RenameScrumTeam
                 .WithErrorCode(NameRequired)
                 .MustAsync(async (name, cancellationToken) =>
                 {
-                    var teamExist = await dbContext.ScrumTeams.AnyAsync(t => t.Name == name, 
+                    var teamExist = await dbContext.ScrumTeams
+                        .AsNoTracking()
+                        .AnyAsync(t => t.Name == name, 
                         cancellationToken);
                     return !teamExist;
                 }).WithErrorCode(NameAlreadyTaken);

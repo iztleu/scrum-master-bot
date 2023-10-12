@@ -24,6 +24,7 @@ public class CreateScrumTeam
                 .MustAsync(async (id, cancellationToken) =>
                 {
                     var teamExist = await dbContext.ScrumTeams
+                        .AsNoTracking()
                         .AnyAsync(t => t.Owner.TelegramUserId == id, cancellationToken);
                     return !teamExist;
                 })
@@ -34,7 +35,9 @@ public class CreateScrumTeam
                 .WithErrorCode(NameRequired)
                 .MustAsync(async (name, cancellationToken) =>
                 {
-                    var teamExist = await dbContext.ScrumTeams.AnyAsync(t => t.Name == name, cancellationToken);
+                    var teamExist = await dbContext.ScrumTeams
+                        .AsNoTracking()
+                        .AnyAsync(t => t.Name == name, cancellationToken);
                     return !teamExist;
                 }).WithErrorCode(TeamAlreadyExists);
         }

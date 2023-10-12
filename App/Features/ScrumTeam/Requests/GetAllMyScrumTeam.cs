@@ -27,6 +27,7 @@ public class GetAllMyScrumTeam
         public async Task<Response> Handle(Request request, CancellationToken cancellationToken)
         {
             var teams = await _dbContext.ScrumTeams
+                .AsNoTracking()
                 .Include(t => t.Members)
                 .ThenInclude(m => m.User)
                 .Where(t => t.Members

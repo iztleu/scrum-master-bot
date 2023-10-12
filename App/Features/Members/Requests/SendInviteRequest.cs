@@ -23,7 +23,7 @@ public class SendInviteRequest
                 .Cascade(CascadeMode.Stop)
                 .MustAsync(async (x, token) =>
                 {
-                    var userExists = await dbContext.Users.AnyAsync(user => user.TelegramUserId == x, token);
+                    var userExists = await dbContext.Users.AsNoTracking().AnyAsync(user => user.TelegramUserId == x, token);
                     return userExists;
                 }).WithErrorCode(UserNotFound);
             
@@ -32,7 +32,7 @@ public class SendInviteRequest
                 .WithErrorCode(NameRequired)
                 .MustAsync(async (name, cancellationToken) =>
                 {
-                    var teamExist = await dbContext.ScrumTeams.AnyAsync(t => t.Name == name, cancellationToken);
+                    var teamExist = await dbContext.ScrumTeams.AsNoTracking().AnyAsync(t => t.Name == name, cancellationToken);
                     return teamExist;
                 }).WithErrorCode(TeamNotFound);
         }

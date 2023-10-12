@@ -21,7 +21,7 @@ public class AcceptInvite
                 .Cascade(CascadeMode.Stop)
                 .MustAsync(async (x, token) =>
                 {
-                    var userExists = await dbContext.Users.AnyAsync(user => user.TelegramUserId == x, token);
+                    var userExists = await dbContext.Users.AsNoTracking().AnyAsync(user => user.TelegramUserId == x, token);
                     return userExists;
                 }).WithErrorCode(UserNotFound);
             
@@ -32,6 +32,7 @@ public class AcceptInvite
                 {
                     var teamExist = await dbContext
                         .Members
+                        .AsNoTracking()
                         .AnyAsync(m => m.Id == id && m.Status == Status.Invited, cancellationToken);
                     return teamExist;
                 }).WithErrorCode(MemberNotFound);

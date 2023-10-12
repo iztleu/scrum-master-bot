@@ -27,6 +27,7 @@ public class GetScrumTeamByName
         public async Task<Response> Handle(Request request, CancellationToken cancellationToken)
         {
             var team = await _dbContext.ScrumTeams
+                .AsNoTracking()
                 .Include(t => t.Members.Where(m => m.Status == Status.Accepted))
                 .ThenInclude(m => m.User)
                 .Where(t => t.Members.Any(m => m.User!.TelegramUserId == request.TelegramUserId) && t.Name == request.TeamName)
