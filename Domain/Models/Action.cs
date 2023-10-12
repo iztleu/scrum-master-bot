@@ -18,6 +18,9 @@ public class Action
 public enum ActionType
 {
     CreateScrumTeam,
-    ShowTeam,
+    ShowAllTeams,
+    ShowMembers,
     JoinToScrumTeam,
+    ChooseScrumTeamActions,
+    RenameScrumTeam
 }

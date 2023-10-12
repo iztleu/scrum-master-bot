@@ -69,7 +69,7 @@ public class UpdateHandler : IUpdateHandler
 
         await _actionService.DeleteActionsAsync(message.GetTelegramId());
         
-        var replyKeyboardMarkup = await CreateCommonButton(message.GetTelegramId());
+        var replyKeyboardMarkup = await CreateCommonButtonAsync(message.GetTelegramId());
         
         await _botClient.SendTextMessageAsync(
             chatId: message.GetTelegramId(),
@@ -86,7 +86,7 @@ public class UpdateHandler : IUpdateHandler
 
         await _botClient.AnswerCallbackQueryAsync(
             callbackQueryId: callbackQuery.Id);
-        var replyKeyboardMarkup = await CreateCommonButton(callbackQuery.From.Id);
+        var replyKeyboardMarkup = await CreateCommonButtonAsync(callbackQuery.From.Id);
         
         await _botClient.SendTextMessageAsync(
             chatId: callbackQuery.From.Id,
@@ -122,12 +122,12 @@ public class UpdateHandler : IUpdateHandler
             {
                 var actionResult =  userAction.Type switch
                 {
-                    ActionType.CreateScrumTeam => await DoActionCreateScrumTeam(_botClient, userAction, message,
-                        cancellationToken),
-                    ActionType.ShowTeam => await DoActionShowTeam(_botClient, userAction, message, cancellationToken),
-                    ActionType.JoinToScrumTeam => await DoActionJoinToScrumTeam(_botClient, userAction, message,
-                        cancellationToken),
-                    _ => throw new ArgumentOutOfRangeException(nameof(ActionType))
+                    ActionType.CreateScrumTeam => await DoActionCreateScrumTeam(_botClient, userAction, message, cancellationToken),
+                    ActionType.ShowAllTeams => await DoActionShowAllTeam(_botClient, userAction, message, cancellationToken),
+                    ActionType.JoinToScrumTeam => await DoActionJoinToScrumTeam(_botClient, userAction, message, cancellationToken),
+                    ActionType.ChooseScrumTeamActions => await DoActionChooseScrumTeamActions(_botClient, userAction, message, cancellationToken),
+                    ActionType.RenameScrumTeam => await DoActionRenameScrumTeam(_botClient, userAction, message, cancellationToken),
+                    _ => await UnknownAction(_botClient, userAction, message, cancellationToken)
                 };
             
                 _logger.LogInformation("The message was sent with id: {SentMessageId}", actionResult.MessageId);
@@ -138,7 +138,7 @@ public class UpdateHandler : IUpdateHandler
             {
                 Buttons.Start => Start(_botClient, message, cancellationToken),
                 Buttons.CreateScrumTeam => CreateScrumTeam(_botClient, message, cancellationToken),
-                Buttons.ShowMyScrumTeam => ShowMyScrumTeam(_botClient, message, cancellationToken),
+                Buttons.ShowMyScrumTeams => ShowMyScrumTeams(_botClient, message, cancellationToken),
                 Buttons.JoinScrumTeam => JoinToScrumTeam(_botClient, message, cancellationToken),
                 Buttons.StopAction => StopAction(_botClient, userAction, message, cancellationToken),
                 _ => Start(_botClient, message, cancellationToken)
@@ -152,6 +152,54 @@ public class UpdateHandler : IUpdateHandler
             _logger.LogError(e, "Error while processing message");
             await HandleMessageExceprion(message, e);
         }
+    }
+
+    private async Task<Message> DoActionRenameScrumTeam(ITelegramBotClient botClient, Action userAction, Message message, CancellationToken cancellationToken)
+    {
+        var oldTeamName = userAction.AdditionInfo!.Split("=").Last();
+        await _mediator.Send(new RenameScrumTeam.Request(
+                message.GetTelegramId(), 
+                oldTeamName,
+                message.Text),
+            cancellationToken);
+        
+        await _actionService.DeleteActionAsync(userAction);
+
+        var replyKeyboardMarkup = await CreateCommonButtonAsync(message.GetTelegramId(), cancellationToken);
+
+        return await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"Команда {oldTeamName} успешно переименована в {message.Text}",
+            replyMarkup: replyKeyboardMarkup,
+            cancellationToken: cancellationToken);
+    }
+
+    private async Task<Message> UnknownAction(ITelegramBotClient botClient, Action userAction, Message message, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    private async Task<Message> DoActionChooseScrumTeamActions(ITelegramBotClient botClient, Action userAction, Message message, CancellationToken cancellationToken)
+    {
+        var action = message.Text switch
+        {
+            Buttons.RenameScrumTeam => await DoActionChooseRenameScrumTeam(_botClient, userAction, message, cancellationToken),
+            Buttons.ShowMembers => await DoActionChooseShowMembers(_botClient, userAction, message, cancellationToken),
+            _ => await UnknownAction(_botClient, userAction, message, cancellationToken)
+        };
+
+        return action;
+    }
+
+    private async Task<Message> DoActionChooseRenameScrumTeam(ITelegramBotClient botClient, Action userAction, Message message, CancellationToken cancellationToken)
+    {
+        userAction.Type = ActionType.RenameScrumTeam;
+        await _actionService.UpdateActionAsync(userAction);
+        
+        return await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"Введите новое название команды {userAction.AdditionInfo.Split('=').Last()}",
+            cancellationToken: cancellationToken);
     }
 
     // Process Inline Keyboard callback data
@@ -222,7 +270,7 @@ public class UpdateHandler : IUpdateHandler
                     )
                 );
         }
-        var replyKeyboardMarkup = await CreateCommonButton(message.GetTelegramId(), cancellationToken);
+        var replyKeyboardMarkup = await CreateCommonButtonAsync(message.GetTelegramId(), cancellationToken);
 
         return await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
@@ -231,14 +279,14 @@ public class UpdateHandler : IUpdateHandler
             cancellationToken: cancellationToken);
     }
 
-    private async Task<ReplyKeyboardMarkup> CreateCommonButton(long telegramId, CancellationToken cancellationToken = default)
+    private async Task<ReplyKeyboardMarkup> CreateCommonButtonAsync(long telegramId, CancellationToken cancellationToken = default)
     {
         var response = await _mediator.Send(new GetAllMyScrumTeam.Request(telegramId), cancellationToken);
 
         var keyButtons = new List<KeyboardButton> { Buttons.CreateScrumTeam, Buttons.JoinScrumTeam };
         if (response.teams.Length != 0)
         {
-            keyButtons.Add(new KeyboardButton(Buttons.ShowMyScrumTeam));
+            keyButtons.Add(new KeyboardButton(Buttons.ShowMyScrumTeams));
         }
 
         ReplyKeyboardMarkup replyKeyboardMarkup = new(
@@ -277,7 +325,7 @@ public class UpdateHandler : IUpdateHandler
             cancellationToken: cancellationToken);
     }
 
-    private async Task<Message> ShowMyScrumTeam(ITelegramBotClient botClient, Message message,
+    private async Task<Message> ShowMyScrumTeams(ITelegramBotClient botClient, Message message,
         CancellationToken cancellationToken)
     {
         var response = await _mediator.Send(new GetAllMyScrumTeam.Request(message.GetTelegramId()), cancellationToken);
@@ -285,15 +333,8 @@ public class UpdateHandler : IUpdateHandler
         ReplyKeyboardMarkup replyKeyboardMarkup;
         if (response.teams.Length == 0)
         {
-            replyKeyboardMarkup = new(
-                new[]
-                {
-                    new KeyboardButton[] { Buttons.CreateScrumTeam, Buttons.ShowMyScrumTeam },
-                })
-            {
-                ResizeKeyboard = true
-            };
-
+            replyKeyboardMarkup = await CreateCommonButtonAsync(message.GetTelegramId(), cancellationToken);
+            
             return await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
                 replyMarkup: replyKeyboardMarkup,
@@ -313,7 +354,7 @@ public class UpdateHandler : IUpdateHandler
         await _actionService.CreateActionAsync(new()
         {
             TelegramUserId = message.GetTelegramId(),
-            Type = ActionType.ShowTeam
+            Type = ActionType.ShowAllTeams
         });
 
         return await botClient.SendTextMessageAsync(
@@ -354,7 +395,7 @@ public class UpdateHandler : IUpdateHandler
         if (action is not null)
             await _actionService.DeleteActionAsync(action);
 
-        var replyKeyboardMarkup = await CreateCommonButton(message.GetTelegramId(), cancellationToken);
+        var replyKeyboardMarkup = await CreateCommonButtonAsync(message.GetTelegramId(), cancellationToken);
 
         return await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
@@ -370,7 +411,7 @@ public class UpdateHandler : IUpdateHandler
             cancellationToken);
         await _actionService.DeleteActionAsync(action);
 
-        var replyKeyboardMarkup = await CreateCommonButton(message.GetTelegramId(), cancellationToken);
+        var replyKeyboardMarkup = await CreateCommonButtonAsync(message.GetTelegramId(), cancellationToken);
 
         return await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
@@ -379,10 +420,43 @@ public class UpdateHandler : IUpdateHandler
             cancellationToken: cancellationToken);
     }
 
-    private async Task<Message> DoActionShowTeam(ITelegramBotClient botClient, Action action, Message message,
+    private async Task<Message> DoActionShowAllTeam(ITelegramBotClient botClient, Action action, Message message,
         CancellationToken cancellationToken)
     {
-        var team = (await _mediator.Send(new GetScrumTeamByName.Request(message.GetTelegramId(), message.Text),
+        var keyButtonsL1 = new List<KeyboardButton> { Buttons.RenameScrumTeam, Buttons.ShowMembers};
+        var keyButtonsL2 = new List<KeyboardButton> { Buttons.StopAction };
+        
+        ReplyKeyboardMarkup replyKeyboardMarkup = new (new[]
+        {
+            keyButtonsL1,
+            keyButtonsL2
+        })
+        {
+            ResizeKeyboard = true
+        };
+
+        await _actionService.DeleteActionAsync(action);
+        await _actionService.CreateActionAsync(new Action()
+        {
+            TelegramUserId = message.GetTelegramId(),
+            Type = ActionType.ChooseScrumTeamActions,
+            AdditionInfo = $"tema_name={message.Text}"
+        });
+        
+        return await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"Выберите действие",
+            replyMarkup: replyKeyboardMarkup,
+            cancellationToken: cancellationToken);
+    }
+    
+    private async Task<Message> DoActionChooseShowMembers(ITelegramBotClient botClient, Action action, Message message,
+        CancellationToken cancellationToken)
+    {
+        var team = (await _mediator.Send(
+            new GetScrumTeamByName.Request(message.GetTelegramId(), 
+                action.AdditionInfo.Split("=")
+                    .Last()),
             cancellationToken)).Team;
 
         List<List<InlineKeyboardButton>> inlineKeyboardButtons = new();
@@ -419,7 +493,7 @@ public class UpdateHandler : IUpdateHandler
 
         await _actionService.DeleteActionAsync(userAction);
 
-        var replyKeyboardMarkup = await CreateCommonButton(message.GetTelegramId(), cancellationToken);
+        var replyKeyboardMarkup = await CreateCommonButtonAsync(message.GetTelegramId(), cancellationToken);
 
         return await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
@@ -434,8 +508,10 @@ public static class Buttons
     public const string Start = "/start";
     public const string StopAction = "Отменить действие";
     public const string CreateScrumTeam = "Создать Scrum команду";
-    public const string ShowMyScrumTeam = "Показать мои Scrum команды";
+    public const string ShowMyScrumTeams = "Показать мои Scrum команды";
     public const string JoinScrumTeam = "Присоединиться к Scrum команде";
+    public const string RenameScrumTeam = "Переименовать Scrum команду";
+    public const string ShowMembers = "Показать участников Scrum команды";
     public const string LeaveScrumTeam = "Покинуть Scrum команду";
 }
 

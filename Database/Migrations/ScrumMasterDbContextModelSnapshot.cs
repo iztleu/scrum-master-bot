@@ -44,7 +44,7 @@ namespace Database.Migrations
                     b.HasIndex("TelegramUserId")
                         .IsUnique();
 
-                    b.ToTable("Actions");
+                    b.ToTable("Actions", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Member", b =>
@@ -73,7 +73,7 @@ namespace Database.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Members");
+                    b.ToTable("Members", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.ScrumTeam", b =>
@@ -99,7 +99,7 @@ namespace Database.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("ScrumTeams");
+                    b.ToTable("ScrumTeams", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.User", b =>
@@ -127,7 +127,7 @@ namespace Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Member", b =>
