@@ -3,6 +3,7 @@ using App.Errors.Exceptions;
 using App.Features.Members.Requests;
 using App.Features.ScrumTeam.Requests;
 using App.Features.User.Requests;
+using App.Features.Voting.Models;
 using App.Features.Voting.Requests;
 using Domain.Models;
 using MediatR;
@@ -123,10 +124,10 @@ public class UpdateHandler : IUpdateHandler
             {
                 var actionResult =  userAction.Type switch
                 {
+                    ActionType.ChooseScrumTeamActions => await DoActionChooseScrumTeamActions(_botClient, userAction, message, cancellationToken),
                     ActionType.CreateScrumTeam => await DoActionCreateScrumTeam(_botClient, userAction, message, cancellationToken),
                     ActionType.ShowAllTeams => await DoActionShowAllTeam(_botClient, userAction, message, cancellationToken),
                     ActionType.JoinToScrumTeam => await DoActionJoinToScrumTeam(_botClient, userAction, message, cancellationToken),
-                    ActionType.ChooseScrumTeamActions => await DoActionChooseScrumTeamActions(_botClient, userAction, message, cancellationToken),
                     ActionType.RenameScrumTeam => await DoActionRenameScrumTeam(_botClient, userAction, message, cancellationToken),
                     ActionType.StartVoting => await DoActionStartVoting(_botClient, userAction, message, cancellationToken),
                     _ => await UnknownAction(_botClient, userAction, message, cancellationToken)
@@ -158,7 +159,7 @@ public class UpdateHandler : IUpdateHandler
 
     private async Task<Message> DoActionStartVoting(ITelegramBotClient botClient, Action userAction, Message message, CancellationToken cancellationToken)
     {
-        var teamName = userAction.AdditionInfo!.Split("=").Last();
+        var teamName = userAction.GetAdditionalData().GetValueOrDefault(AdditionalKeys.ScrumTeamName);
         var votingName = message.Text;
         await _mediator.Send(new Start.Request(message.GetTelegramId(), teamName, votingName), cancellationToken);
         await _actionService.DeleteActionAsync(userAction);
@@ -174,7 +175,7 @@ public class UpdateHandler : IUpdateHandler
 
     private async Task<Message> DoActionRenameScrumTeam(ITelegramBotClient botClient, Action userAction, Message message, CancellationToken cancellationToken)
     {
-        var oldTeamName = userAction.AdditionInfo!.Split("=").Last();
+        var oldTeamName = userAction.GetAdditionalData().GetValueOrDefault(AdditionalKeys.ScrumTeamName);
         await _mediator.Send(new RenameScrumTeam.Request(
                 message.GetTelegramId(), 
                 oldTeamName,
@@ -205,10 +206,28 @@ public class UpdateHandler : IUpdateHandler
             Buttons.ShowMembers => await DoActionChooseShowMembers(_botClient, userAction, message, cancellationToken),
             Buttons.LeaveScrumTeam => await DoActionChooseLeaveScrumTeam(_botClient, userAction, message, cancellationToken),
             Buttons.StartVoting => await DoActionChooseStartVoting(_botClient, userAction, message, cancellationToken),
+            Buttons.PublishVoting => await DoActionChoosePublishVoting(_botClient, userAction, message, cancellationToken),
             _ => await UnknownAction(_botClient, userAction, message, cancellationToken)
         };
 
         return action;
+    }
+
+    private async Task<Message> DoActionChoosePublishVoting(ITelegramBotClient botClient, Action userAction, Message message, CancellationToken cancellationToken)
+    {
+        var additionalData = userAction.GetAdditionalData().GetValueOrDefault(AdditionalKeys.VotingId);
+        var votingId = long.TryParse(additionalData, out var id)?id:0;
+        await _mediator.Send(new PublishVoting.Request(message.GetTelegramId(), votingId), cancellationToken);
+        
+        await _actionService.DeleteActionAsync(userAction);
+
+        var replyKeyboardMarkup = await CreateCommonButtonAsync(message.GetTelegramId(), cancellationToken);
+
+        return await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"Голосование отправлено не проголосовавшим",
+            replyMarkup: replyKeyboardMarkup,
+            cancellationToken: cancellationToken);
     }
 
     private async Task<Message> DoActionChooseStartVoting(ITelegramBotClient botClient, Action userAction, Message message, CancellationToken cancellationToken)
@@ -224,7 +243,7 @@ public class UpdateHandler : IUpdateHandler
 
     private async Task<Message> DoActionChooseLeaveScrumTeam(ITelegramBotClient botClient, Action userAction, Message message, CancellationToken cancellationToken)
     {
-        var teamName = userAction.AdditionInfo!.Split("=").Last();
+        var teamName = userAction.GetAdditionalData().GetValueOrDefault(AdditionalKeys.ScrumTeamName);
         await _mediator.Send(new LeaveTeam.Request(message.GetTelegramId(), teamName), cancellationToken);
         
         await _actionService.DeleteActionAsync(userAction);
@@ -245,7 +264,7 @@ public class UpdateHandler : IUpdateHandler
         
         return await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: $"Введите новое название команды {userAction.AdditionInfo.Split('=').Last()}",
+            text: $"Введите новое название команды {userAction.GetAdditionalData().GetValueOrDefault(AdditionalKeys.ScrumTeamName)}",
             cancellationToken: cancellationToken);
     }
 
@@ -258,15 +277,22 @@ public class UpdateHandler : IUpdateHandler
 
             if (callbackQuery.Data is not null)
             {
-                var memberId = callbackQuery.Data.Split(" ").Last();
+                var data = callbackQuery.Data.Split(" ").Last();
                 if (callbackQuery.Data.Contains(CallbackQueryData.AcceptInviteRequest))
                 {
-                    await _mediator.Send(new AcceptInvite.Request(callbackQuery.From.Id, int.Parse(memberId)),
+                    await _mediator.Send(new AcceptInvite.Request(callbackQuery.From.Id, int.Parse(data)),
                         cancellationToken);
                 }
                 if (callbackQuery.Data.Contains(CallbackQueryData.DeclineInviteRequest))
                 {
-                    await _mediator.Send(new DeclineInvite.Request(callbackQuery.From.Id, int.Parse(memberId)),
+                    await _mediator.Send(new DeclineInvite.Request(callbackQuery.From.Id, int.Parse(data)),
+                        cancellationToken);
+                }
+
+                if (callbackQuery.Data.Contains(CallbackQueryData.VoteRequest))
+                {
+                    var votingId = callbackQuery.Data.Split(";").Last();
+                    await _mediator.Send(new DoVote.Request(callbackQuery.From.Id, long.Parse(votingId), callbackQuery.Message.Text),
                         cancellationToken);
                 }
 
@@ -470,8 +496,33 @@ public class UpdateHandler : IUpdateHandler
     private async Task<Message> DoActionShowAllTeam(ITelegramBotClient botClient, Action action, Message message,
         CancellationToken cancellationToken)
     {
+        var additionInfo = new Dictionary<string, string>()
+        {
+            {AdditionalKeys.ScrumTeamName , message.Text}
+        };
+        var voting = (await _mediator.Send(
+            new GetStartedVoting.Request(message.GetTelegramId(), message.Text),
+            cancellationToken)).Voting;
+        
+        var keyButtonsL2 = new List<KeyboardButton> { Buttons.ShowMembers };
+
+        if (voting is not null)
+        {
+            if (voting.ScrumTeam.Members.Any(m => m.User.TelegramUserId == message.GetTelegramId() 
+                                                 && m.Role == Role.ScrumMaster))
+            {
+                keyButtonsL2.Add(Buttons.PublishVoting);
+            }
+
+            additionInfo.Add(AdditionalKeys.VotingId, voting.Id.ToString());
+        }
+        else
+        {
+            keyButtonsL2.Add(Buttons.StartVoting);
+        }
+            
+        
         var keyButtonsL1 = new List<KeyboardButton> { Buttons.RenameScrumTeam,  Buttons.LeaveScrumTeam};
-        var keyButtonsL2 = new List<KeyboardButton> { Buttons.StartVoting, Buttons.ShowMembers };
         var keyButtonsL3 = new List<KeyboardButton> { Buttons.StopAction };
         
         ReplyKeyboardMarkup replyKeyboardMarkup = new (new[]
@@ -484,13 +535,9 @@ public class UpdateHandler : IUpdateHandler
             ResizeKeyboard = true
         };
 
-        await _actionService.DeleteActionAsync(action);
-        await _actionService.CreateActionAsync(new Action()
-        {
-            TelegramUserId = message.GetTelegramId(),
-            Type = ActionType.ChooseScrumTeamActions,
-            AdditionInfo = $"tema_name={message.Text}"
-        });
+        action.SetAdditionalData(additionInfo);
+        action.Type = ActionType.ChooseScrumTeamActions;
+        await _actionService.UpdateActionAsync(action);
         
         return await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
@@ -502,10 +549,9 @@ public class UpdateHandler : IUpdateHandler
     private async Task<Message> DoActionChooseShowMembers(ITelegramBotClient botClient, Action action, Message message,
         CancellationToken cancellationToken)
     {
+        var teamName = action.GetAdditionalData().GetValueOrDefault(AdditionalKeys.ScrumTeamName);
         var team = (await _mediator.Send(
-            new GetScrumTeamByName.Request(message.GetTelegramId(), 
-                action.AdditionInfo.Split("=")
-                    .Last()),
+            new GetScrumTeamByName.Request(message.GetTelegramId(), teamName),
             cancellationToken)).Team;
 
         List<List<InlineKeyboardButton>> inlineKeyboardButtons = new();
@@ -563,6 +609,7 @@ public static class Buttons
     public const string ShowMembers = "Показать участников Scrum команды";
     public const string LeaveScrumTeam = "Покинуть Scrum команду";
     public const string StartVoting = "Начать голосование";
+    public const string PublishVoting = "Отправить голосование не проголосовавшим";
 }
 
 public static class CallbackQueryData

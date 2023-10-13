@@ -11,6 +11,8 @@ public class GetStartedVoting
 {
     public record Request(long TelegramUserId, string TeamName) : IRequest<Response>;
 
+    public record Response(Domain.Models.Voting? Voting);
+    
     public class RequestValidator : AbstractValidator<Request>
     {
         public RequestValidator(ScrumMasterDbContext dbContext)
@@ -37,21 +39,7 @@ public class GetStartedVoting
         }
     }
     
-    public class Response
-    {
-        public Response(long id, string title, string teamName, string status)
-        {
-            Id = id;
-            Title = title;
-            TeamName = teamName;
-            Status = status;
-        }
-
-        public long Id { get; }
-        public string Title { get; }
-        public string TeamName { get; }
-        public string Status { get; }
-    }
+  
     
     public class Handler : IRequestHandler<Request, Response>
     {
@@ -67,15 +55,13 @@ public class GetStartedVoting
             var voting = await _dbContext.Votings
                 .AsNoTracking()
                 .Include(v => v.ScrumTeam)
+                .ThenInclude(t => t.Members)
+                .ThenInclude(m => m.User)
                 .Where(v => v.ScrumTeam.Name == request.TeamName 
                             && v.Status != Domain.Models.VotingStatus.Finished)
                 .FirstOrDefaultAsync(cancellationToken);
-            if (voting == null)
-            {
-                throw new LogicConflictException("Voting is not founded",VotingNotFound);
-            }
 
-            return new Response(voting.Id, voting.Title, voting.ScrumTeam.Name, voting.Status.ToString());
+            return new Response(voting);
         }
     }
 }

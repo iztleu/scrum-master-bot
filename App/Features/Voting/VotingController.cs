@@ -43,7 +43,7 @@ public class VotingController : Controller
     public async Task<IActionResult> Vote([FromBody]VoteRequest request, CancellationToken cancellationToken)
     {
         var userId = _currentAuthInfoSource.GetTelegramUserId();
-        await _mediator.Send(new Vote.Request(userId, request.VotingId, request.Value), cancellationToken);
+        await _mediator.Send(new DoVote.Request(userId, request.VotingId, request.Value), cancellationToken);
         return Ok();
     }
     
