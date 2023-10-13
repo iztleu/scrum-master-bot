@@ -3,6 +3,7 @@ using App.Errors.Exceptions;
 using App.Features.Members.Requests;
 using App.Features.ScrumTeam.Requests;
 using App.Features.User.Requests;
+using App.Features.Voting.Requests;
 using Domain.Models;
 using MediatR;
 using Telegram.Bot;
@@ -127,6 +128,7 @@ public class UpdateHandler : IUpdateHandler
                     ActionType.JoinToScrumTeam => await DoActionJoinToScrumTeam(_botClient, userAction, message, cancellationToken),
                     ActionType.ChooseScrumTeamActions => await DoActionChooseScrumTeamActions(_botClient, userAction, message, cancellationToken),
                     ActionType.RenameScrumTeam => await DoActionRenameScrumTeam(_botClient, userAction, message, cancellationToken),
+                    ActionType.StartVoting => await DoActionStartVoting(_botClient, userAction, message, cancellationToken),
                     _ => await UnknownAction(_botClient, userAction, message, cancellationToken)
                 };
             
@@ -152,6 +154,22 @@ public class UpdateHandler : IUpdateHandler
             _logger.LogError(e, "Error while processing message");
             await HandleMessageExceprion(message, e);
         }
+    }
+
+    private async Task<Message> DoActionStartVoting(ITelegramBotClient botClient, Action userAction, Message message, CancellationToken cancellationToken)
+    {
+        var teamName = userAction.AdditionInfo!.Split("=").Last();
+        var votingName = message.Text;
+        await _mediator.Send(new Start.Request(message.GetTelegramId(), teamName, votingName), cancellationToken);
+        await _actionService.DeleteActionAsync(userAction);
+
+        var replyKeyboardMarkup = await CreateCommonButtonAsync(message.GetTelegramId(), cancellationToken);
+
+        return await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"Голосование {votingName} началось",
+            replyMarkup: replyKeyboardMarkup,
+            cancellationToken: cancellationToken);
     }
 
     private async Task<Message> DoActionRenameScrumTeam(ITelegramBotClient botClient, Action userAction, Message message, CancellationToken cancellationToken)
@@ -186,10 +204,22 @@ public class UpdateHandler : IUpdateHandler
             Buttons.RenameScrumTeam => await DoActionChooseRenameScrumTeam(_botClient, userAction, message, cancellationToken),
             Buttons.ShowMembers => await DoActionChooseShowMembers(_botClient, userAction, message, cancellationToken),
             Buttons.LeaveScrumTeam => await DoActionChooseLeaveScrumTeam(_botClient, userAction, message, cancellationToken),
+            Buttons.StartVoting => await DoActionChooseStartVoting(_botClient, userAction, message, cancellationToken),
             _ => await UnknownAction(_botClient, userAction, message, cancellationToken)
         };
 
         return action;
+    }
+
+    private async Task<Message> DoActionChooseStartVoting(ITelegramBotClient botClient, Action userAction, Message message, CancellationToken cancellationToken)
+    { 
+        userAction.Type = ActionType.StartVoting;
+        await _actionService.UpdateActionAsync(userAction);
+
+        return await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: $"Введите название задачи",
+            cancellationToken: cancellationToken);
     }
 
     private async Task<Message> DoActionChooseLeaveScrumTeam(ITelegramBotClient botClient, Action userAction, Message message, CancellationToken cancellationToken)
@@ -440,13 +470,15 @@ public class UpdateHandler : IUpdateHandler
     private async Task<Message> DoActionShowAllTeam(ITelegramBotClient botClient, Action action, Message message,
         CancellationToken cancellationToken)
     {
-        var keyButtonsL1 = new List<KeyboardButton> { Buttons.RenameScrumTeam, Buttons.ShowMembers, Buttons.LeaveScrumTeam};
-        var keyButtonsL2 = new List<KeyboardButton> { Buttons.StopAction };
+        var keyButtonsL1 = new List<KeyboardButton> { Buttons.RenameScrumTeam,  Buttons.LeaveScrumTeam};
+        var keyButtonsL2 = new List<KeyboardButton> { Buttons.StartVoting, Buttons.ShowMembers };
+        var keyButtonsL3 = new List<KeyboardButton> { Buttons.StopAction };
         
         ReplyKeyboardMarkup replyKeyboardMarkup = new (new[]
         {
             keyButtonsL1,
-            keyButtonsL2
+            keyButtonsL2,
+            keyButtonsL3,
         })
         {
             ResizeKeyboard = true
@@ -530,12 +562,14 @@ public static class Buttons
     public const string RenameScrumTeam = "Переименовать Scrum команду";
     public const string ShowMembers = "Показать участников Scrum команды";
     public const string LeaveScrumTeam = "Покинуть Scrum команду";
+    public const string StartVoting = "Начать голосование";
 }
 
 public static class CallbackQueryData
 {
     public const string AcceptInviteRequest = "accept invite request";
     public const string DeclineInviteRequest = "decline invite request";
+    public const string VoteRequest = "vote request";
 }
 
 public static class Extensions

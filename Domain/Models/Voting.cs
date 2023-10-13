@@ -12,7 +12,7 @@ public class Voting
     
     public VotingStatus Status { get; set; }
     
-    public Vote[] Votes { get; set; }
+    public List<Vote> Votes { get; set; }
     
     public DateTimeOffset CreatedAt { get; set; }
 }

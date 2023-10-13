@@ -1,4 +1,5 @@
 using App.Errors.Exceptions;
+using App.Features.Voting.Events;
 using Database;
 using Domain.Models;
 using FluentValidation;
@@ -11,8 +12,9 @@ namespace App.Features.Voting.Requests;
 
 public class Start
 {
-    public record Request(long TelegramUserId, string TeamName, string VotingName) : IRequest;
+    public record Request(long TelegramUserId, string TeamName, string VotingName) : IRequest<Response>;
 
+    public record Response(long Id, string Title, string TeamName, string Status);
     public class RequestValidator : AbstractValidator<Request>
     {
         public RequestValidator(ScrumMasterDbContext dbContext)
@@ -43,18 +45,20 @@ public class Start
         }
     }
     
-    public class Handler : IRequestHandler<Request>
+    public class Handler : IRequestHandler<Request, Response>
     {
         private readonly ScrumMasterDbContext _dbContext;
         private readonly ITelegramBotClient _telegramBotClient;
+        private readonly IPublisher _publisher;
 
-        public Handler(ScrumMasterDbContext dbContext, ITelegramBotClient telegramBotClient)
+        public Handler(ScrumMasterDbContext dbContext, ITelegramBotClient telegramBotClient, IPublisher publisher)
         {
             _dbContext = dbContext;
             _telegramBotClient = telegramBotClient;
+            _publisher = publisher;
         }
 
-        public async Task Handle(Request request, CancellationToken cancellationToken)
+        public async Task<Response> Handle(Request request, CancellationToken cancellationToken)
         {
             var team = await _dbContext.ScrumTeams
                 .Include(t => t.Members)
@@ -69,13 +73,28 @@ public class Start
             if(team.Members.All(m => m.User.TelegramUserId != request.TelegramUserId 
                                      && m.Role != Role.ScrumMaster))
             {
-                throw new LogicConflictException("User is not a member of the team", UserNotFound);
+                throw new LogicConflictException("User is not a ScrumMaster of the team", UserIsNotScrumMaster);
             }
+            
+            if (await _dbContext.Votings
+                    .AnyAsync(v => v.ScrumTeamId  == team.Id 
+                                   && v.Title == request.VotingName
+                        && v.Status != VotingStatus.Finished, cancellationToken))
+            {
+                throw new LogicConflictException("Voting with the same name already exists", VotingAlreadyExists);
+            } 
+            
+            if (await _dbContext.Votings
+                    .AnyAsync(v => v.ScrumTeamId  == team.Id 
+                                   && v.Status != VotingStatus.Finished, cancellationToken))
+            {
+                throw new LogicConflictException("Active Voting already exists", VotingAlreadyExists);
+            } 
             
             var voting = new Domain.Models.Voting
             {
                 Title = request.VotingName,
-                CreatedAt = DateTimeOffset.Now,
+                CreatedAt = DateTime.UtcNow,
                 ScrumTeam = team,
                 Status = VotingStatus.Created
             };
@@ -83,12 +102,10 @@ public class Start
             await _dbContext.Votings.AddAsync(voting, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
             
-            for( var i = 0; i < team.Members.Count; i++)
-            {
-                var member = team.Members[i];
-                var message = $"Voting {voting.Title} was started";
-                await _telegramBotClient.SendTextMessageAsync(member.User.TelegramUserId, message, cancellationToken: cancellationToken);
-            }
+            await _publisher.Publish(new VotingStartEvent(voting.Id), cancellationToken);
+            
+            return new Response(voting.Id, voting.Title, voting.ScrumTeam.Name, voting.Status.ToString());
         }
     }
 }
+
