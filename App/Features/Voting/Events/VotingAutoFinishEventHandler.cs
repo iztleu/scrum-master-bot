@@ -1,3 +1,4 @@
+using System.Dynamic;
 using Database;
 using Domain.Models;
 using MediatR;
@@ -46,10 +47,15 @@ public class VotingAutoFinishEventHandler : INotificationHandler<VotingAutoFinis
                 pass.Add(voting.Votes[i]);
             }
         }
+        var min = score.Min();
+        var max = score.Max();
             
-        var message = $"Voting {voting.Title} was finished. Average: {score.Average()}, Max: {score.Max()}, Min: {score.Min()}";
+        var message = $"Voting {voting.Title} was finished. Average: {score.Average()}, Max: {max}, Min: {min}";
         var passMessage = pass.Select(m => $"\n{m.Member.User.UserName} voted {m.Value}");
-        
+        if(!CheckRules(min, max))
+        {
+            message += "\nWarning! There is a big difference between the minimum and maximum values";
+        }
         voting.Status = VotingStatus.Finished;
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -63,5 +69,32 @@ public class VotingAutoFinishEventHandler : INotificationHandler<VotingAutoFinis
         });
         
         await Task.WhenAll(tasks);
+    }
+
+    public bool CheckRules(int min, int max)
+    {
+        var minIndex = GetIndex(min);
+        var maxIndex = GetIndex(max);
+
+        if (maxIndex - minIndex > 3)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private int GetIndex(int value)
+    {
+        return value switch
+        {
+            1 => 0,
+            2 => 1,
+            3 => 2,
+            5 => 3,
+            8 => 4,
+            13 => 5,
+            _ => 6
+        };
     }
 }
