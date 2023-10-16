@@ -11,6 +11,7 @@ using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using Action = Domain.Models.Action;
 using UserModel = Domain.Models.User;
@@ -77,7 +78,8 @@ public class UpdateHandler : IUpdateHandler
         await _botClient.SendTextMessageAsync(
             chatId: message.GetTelegramId(),
             replyMarkup: replyKeyboardMarkup,
-            text: text);
+            text: $"<code>{text}</code>",
+            parseMode: ParseMode.Html);
     }
 
     private async Task HandleCallbackException(CallbackQuery callbackQuery, Exception exception)
@@ -94,7 +96,8 @@ public class UpdateHandler : IUpdateHandler
         await _botClient.SendTextMessageAsync(
             chatId: callbackQuery.From.Id,
             replyMarkup: replyKeyboardMarkup,
-            text: text);
+            text: $"<code>{text}</code>",
+            parseMode: ParseMode.Html);
     }
 
     private string HandleException(Exception exception)

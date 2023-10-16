@@ -4,6 +4,7 @@ using Domain.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Telegram.Bot;
+using Telegram.Bot.Types.Enums;
 
 namespace App.Features.Voting.Events;
 
@@ -54,7 +55,7 @@ public class VotingAutoFinishEventHandler : INotificationHandler<VotingAutoFinis
         var passMessage = pass.Select(m => $"\n{m.Member.User!.UserName} voted {m.Value}");
         if(!CheckRules(min, max))
         {
-            message += "\nWarning! There is a big difference between the minimum and maximum values";
+            message += "\n<code>Warning! There is a big difference between the minimum and maximum values<code>";
         }
         voting.Status = VotingStatus.Finished;
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -65,6 +66,7 @@ public class VotingAutoFinishEventHandler : INotificationHandler<VotingAutoFinis
                 .SendTextMessageAsync(
                     m.User!.TelegramUserId,
                     message + string.Join("", passMessage),
+                    parseMode: ParseMode.Html,
                     cancellationToken: cancellationToken);
         });
         
