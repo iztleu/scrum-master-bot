@@ -52,11 +52,16 @@ public class VotingAutoFinishEventHandler : INotificationHandler<VotingAutoFinis
         
         voting.Status = VotingStatus.Finished;
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        var tasks = voting.ScrumTeam.Members.Select(async m =>
+        {
+            await _telegramBotClient
+                .SendTextMessageAsync(
+                    m.User.TelegramUserId,
+                    message + string.Join("", passMessage),
+                    cancellationToken: cancellationToken);
+        });
         
-        await _telegramBotClient
-            .SendTextMessageAsync(
-                voting.ScrumTeam.Members.First(m => m.Role == Role.ScrumMaster).User.TelegramUserId,
-                message + string.Join("", passMessage), 
-                cancellationToken: cancellationToken);
+        await Task.WhenAll(tasks);
     }
 }

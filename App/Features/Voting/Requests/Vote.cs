@@ -8,7 +8,7 @@ using Telegram.Bot;
 namespace App.Features.Voting.Requests;
 using static App.Features.Voting.Errors.VotingValidationErrors;
 
-public class DoVote
+public class Vote
 {
     public record Request(long TelegramUserId, long VotingId, string value) : IRequest;
     
@@ -80,6 +80,12 @@ public class DoVote
             {
                 await _publisher.Publish(new VotingAutoFinishEvent(voting.Id), cancellationToken);
             }
+            
+            await _telegramBotClient
+                .SendTextMessageAsync(
+                    request.TelegramUserId,
+                    "Ваш голос  принят", 
+                    cancellationToken: cancellationToken);
         }
     }
 }

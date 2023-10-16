@@ -34,7 +34,7 @@ public class VotingController : Controller
     public async Task<IActionResult> PublishVoting([FromQuery] long votingId, CancellationToken cancellationToken)
     {
         var userId = _currentAuthInfoSource.GetTelegramUserId();
-        await _mediator.Send(new PublishVoting.Request(userId, votingId), cancellationToken);
+        await _mediator.Send(new ResendVotingMessage.Request(userId, votingId), cancellationToken);
         return Ok();
     }
     
@@ -43,7 +43,7 @@ public class VotingController : Controller
     public async Task<IActionResult> Vote([FromBody]VoteRequest request, CancellationToken cancellationToken)
     {
         var userId = _currentAuthInfoSource.GetTelegramUserId();
-        await _mediator.Send(new DoVote.Request(userId, request.VotingId, request.Value), cancellationToken);
+        await _mediator.Send(new Vote.Request(userId, request.VotingId, request.Value), cancellationToken);
         return Ok();
     }
     

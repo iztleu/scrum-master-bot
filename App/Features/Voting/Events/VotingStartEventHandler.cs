@@ -63,13 +63,13 @@ public class VotingStartEventHandler: INotificationHandler<VotingStartEvent>
     {
         return new List<InlineKeyboardButton>()
         {
-            InlineKeyboardButton.WithCallbackData("1", $"{CallbackQueryData.VoteRequest};{voting.Id}"),
-            InlineKeyboardButton.WithCallbackData("2", $"{CallbackQueryData.VoteRequest};{voting.Id}"),
-            InlineKeyboardButton.WithCallbackData("3", $"{CallbackQueryData.VoteRequest};{voting.Id}"),
-            InlineKeyboardButton.WithCallbackData("5", $"{CallbackQueryData.VoteRequest};{voting.Id}"),
-            InlineKeyboardButton.WithCallbackData("8", $"{CallbackQueryData.VoteRequest};{voting.Id}"),
-            InlineKeyboardButton.WithCallbackData("13", $"{CallbackQueryData.VoteRequest};{voting.Id}"),
-            InlineKeyboardButton.WithCallbackData("pass", $"{CallbackQueryData.VoteRequest};{voting.Id}"),
+            InlineKeyboardButton.WithCallbackData("1", $"{CallbackQueryData.VoteRequest};{voting.Id};1"),
+            InlineKeyboardButton.WithCallbackData("2", $"{CallbackQueryData.VoteRequest};{voting.Id};2"),
+            InlineKeyboardButton.WithCallbackData("3", $"{CallbackQueryData.VoteRequest};{voting.Id};3"),
+            InlineKeyboardButton.WithCallbackData("5", $"{CallbackQueryData.VoteRequest};{voting.Id};5"),
+            InlineKeyboardButton.WithCallbackData("8", $"{CallbackQueryData.VoteRequest};{voting.Id};8"),
+            InlineKeyboardButton.WithCallbackData("13", $"{CallbackQueryData.VoteRequest};{voting.Id};13"),
+            InlineKeyboardButton.WithCallbackData("pass", $"{CallbackQueryData.VoteRequest};{voting.Id};pass"),
         };
     }
 }

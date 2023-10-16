@@ -7,7 +7,7 @@ using static App.Features.Voting.Errors.VotingValidationErrors;
 
 namespace App.Features.Voting.Requests;
 
-class PublishVoting
+class ResendVotingMessage
 {
     public record Request(long TelegramUserId, long VotingId) : IRequest;
 

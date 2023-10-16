@@ -14,6 +14,7 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 using Action = Domain.Models.Action;
 using UserModel = Domain.Models.User;
+using Vote = App.Features.Voting.Requests.Vote;
 
 namespace App.Services;
 
@@ -217,7 +218,7 @@ public class UpdateHandler : IUpdateHandler
     {
         var additionalData = userAction.GetAdditionalData().GetValueOrDefault(AdditionalKeys.VotingId);
         var votingId = long.TryParse(additionalData, out var id)?id:0;
-        await _mediator.Send(new PublishVoting.Request(message.GetTelegramId(), votingId), cancellationToken);
+        await _mediator.Send(new ResendVotingMessage.Request(message.GetTelegramId(), votingId), cancellationToken);
         
         await _actionService.DeleteActionAsync(userAction);
 
@@ -291,8 +292,8 @@ public class UpdateHandler : IUpdateHandler
 
                 if (callbackQuery.Data.Contains(CallbackQueryData.VoteRequest))
                 {
-                    var votingId = callbackQuery.Data.Split(";").Last();
-                    await _mediator.Send(new DoVote.Request(callbackQuery.From.Id, long.Parse(votingId), callbackQuery.Message.Text),
+                    var votingData = GetVotingData(callbackQuery.Data);
+                    await _mediator.Send(new Vote.Request(callbackQuery.From.Id, long.Parse(votingData.VotingId), votingData.Vote),
                         cancellationToken);
                 }
 
@@ -596,7 +597,18 @@ public class UpdateHandler : IUpdateHandler
             replyMarkup: replyKeyboardMarkup,
             cancellationToken: cancellationToken);
     }
+    
+    public static (string TemaName, string VotingId, string Vote) GetVotingData(string votingData){
+        var data = votingData.Split(";");
+        if (data.Length != 3)
+        {
+            throw new ArgumentException("Invalid voting data");
+        }
+        return (data[0], data[1], data[2]);
+    }
 }
+
+
 
 public static class Buttons
 {
