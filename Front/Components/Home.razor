@@ -1,0 +1,12 @@
+<h2>@Title</h2>
+<div>@ChildContent</div>
+<hr />
+<div>Условный футер</div>
+ 
+@code{
+    [Parameter]
+    public string Title { get; set; } = "";
+ 
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

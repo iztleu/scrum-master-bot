@@ -14,7 +14,6 @@ using ReceiverService = App.Services.ReceiverService;
 using UpdateHandler = App.Services.UpdateHandler;
 
 var builder = WebApplication.CreateBuilder(args);
-
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
@@ -30,8 +29,6 @@ builder.AddAuth();
 
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient("telegram_bot_client")
     .AddTypedClient<ITelegramBotClient>((httpClient, sp) =>
     {
@@ -48,12 +45,10 @@ builder.Services.AddHostedService<TelegramBotService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-// if (app.Environment.IsDevelopment())
-// {
-//     app.UseSwagger();
-//     app.UseSwaggerUI();
-// }
+app.UseBlazorFrameworkFiles();
+app.UseStaticFiles();
+ 
+app.MapFallbackToFile("index.html");
 
 app.UseHttpsRedirection();
 
