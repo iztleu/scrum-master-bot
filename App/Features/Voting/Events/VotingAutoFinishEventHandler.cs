@@ -36,7 +36,7 @@ public class VotingAutoFinishEventHandler : INotificationHandler<VotingAutoFinis
 
         var score = new List<int>();
         var pass = new List<Vote>();
-        for(var i = 0; i < voting.Votes.Count; i++)
+        for(var i = 0; i < voting!.Votes.Count; i++)
         {
             if (int.TryParse(voting.Votes[i].Value, out var vote))
             {
@@ -51,7 +51,7 @@ public class VotingAutoFinishEventHandler : INotificationHandler<VotingAutoFinis
         var max = score.Max();
             
         var message = $"Voting {voting.Title} was finished. Average: {score.Average()}, Max: {max}, Min: {min}";
-        var passMessage = pass.Select(m => $"\n{m.Member.User.UserName} voted {m.Value}");
+        var passMessage = pass.Select(m => $"\n{m.Member.User!.UserName} voted {m.Value}");
         if(!CheckRules(min, max))
         {
             message += "\nWarning! There is a big difference between the minimum and maximum values";
@@ -63,7 +63,7 @@ public class VotingAutoFinishEventHandler : INotificationHandler<VotingAutoFinis
         {
             await _telegramBotClient
                 .SendTextMessageAsync(
-                    m.User.TelegramUserId,
+                    m.User!.TelegramUserId,
                     message + string.Join("", passMessage),
                     cancellationToken: cancellationToken);
         });
@@ -71,20 +71,15 @@ public class VotingAutoFinishEventHandler : INotificationHandler<VotingAutoFinis
         await Task.WhenAll(tasks);
     }
 
-    public bool CheckRules(int min, int max)
+    private static bool CheckRules(int min, int max)
     {
         var minIndex = GetIndex(min);
         var maxIndex = GetIndex(max);
 
-        if (maxIndex - minIndex > 3)
-        {
-            return false;
-        }
-
-        return true;
+        return maxIndex - minIndex <= 3;
     }
 
-    private int GetIndex(int value)
+    private static int GetIndex(int value)
     {
         return value switch
         {
