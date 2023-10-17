@@ -1,0 +1,22 @@
+@inherits LayoutComponentBase
+
+
+<style>
+    a {
+        color: #00897B;
+    }
+    a.active {
+        color: #004D40;
+        font-weight: 700;
+    }
+</style>
+<div>
+    <div>
+           <NavLink href="home">Home</NavLink> | 
+           <NavLink href="contacts">Contacts</NavLink> | 
+           <NavLink href="about">About</NavLink>
+       </div>
+    <div>
+        @Body 
+    </div>
+</div>

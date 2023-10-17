@@ -1,11 +1,11 @@
-﻿@using Front.Components
-<h1>Приложение Blazor</h1>
-<Home Title="Главная страница">
-    <div>
-        <h3>Отрывок</h3>
-        <p>Высокой страсти не имея</p>
-        <p>Для кода жизни не щадить,</p>
-        <p>Не мог он джаву от сишарпа</p>
-        <p>Как мы ни бились, отличить.</p>
-    </div>
-</Home>
+﻿@using Front.Shared
+<Router AppAssembly="@typeof(Program).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="@typeof(MainLayout)"/>
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(MainLayout)">
+                    <h3>Page Not Found</h3>
+      </LayoutView>
+    </NotFound>
+</Router>
