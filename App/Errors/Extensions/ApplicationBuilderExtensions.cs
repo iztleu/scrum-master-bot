@@ -3,7 +3,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using App.Errors.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace App.Errors.Extensions;
 
@@ -11,13 +13,18 @@ public static class ApplicationBuilderExtensions
 {
      public static IApplicationBuilder MapProblemDetails(this IApplicationBuilder app)
     {
+       
+        
         app.UseExceptionHandler(builder =>
         {
             builder.Run(async context =>
             {
                 var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>()!;
                 var exception = exceptionHandlerPathFeature.Error;
-
+                
+                using var scope =  app.ApplicationServices.CreateScope();
+                var localizer = scope.ServiceProvider.GetRequiredService<IStringLocalizer<SharedResource>>();
+      
                 switch (exception)
                 {
                     case ValidationErrorsException ex:
@@ -30,7 +37,7 @@ public static class ApplicationBuilderExtensions
                             problemDetails =>
                             {
                                 problemDetails.Extensions["errors"] = ex.Errors
-                                    .Select(x => new ErrorData(x.Field, x.Message, x.Code));
+                                    .Select(x => new ErrorData(x.Field, localizer[x.Message], x.Code));
                             });
                         break;
                     }
@@ -38,7 +45,7 @@ public static class ApplicationBuilderExtensions
                         await WriteProblemDetailsToResponse(context,
                             "Logic conflict",
                             "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409",
-                            ex.Message,
+                            localizer[ex.Message],
                             StatusCodes.Status409Conflict,
                             problemDetails =>
                             {

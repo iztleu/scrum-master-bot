@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApplication", "TestAppl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Front", "Front\Front.csproj", "{C283326F-6893-449A-9891-6ECFE1DEFB0B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoCLI", "MongoCLI\MongoCLI.csproj", "{322E9DE1-FEE7-4B24-A6C8-6B1B6081D1D3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,5 +44,9 @@ Global
 		{C283326F-6893-449A-9891-6ECFE1DEFB0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C283326F-6893-449A-9891-6ECFE1DEFB0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C283326F-6893-449A-9891-6ECFE1DEFB0B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{322E9DE1-FEE7-4B24-A6C8-6B1B6081D1D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{322E9DE1-FEE7-4B24-A6C8-6B1B6081D1D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{322E9DE1-FEE7-4B24-A6C8-6B1B6081D1D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{322E9DE1-FEE7-4B24-A6C8-6B1B6081D1D3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

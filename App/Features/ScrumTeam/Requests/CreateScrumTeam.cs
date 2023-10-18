@@ -1,12 +1,14 @@
-using App.Errors.Exceptions;
-using App.Services;
+
+using App.Resources;
 using Database;
 using Domain.Models;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Team = Domain.Models.ScrumTeam;
 using static App.Features.ScrumTeam.Errors.ScrumTeamValidationErrors;
+using static App.Errors.ValidationErrorsCode;
 
 namespace App.Features.ScrumTeam.Requests;
 
@@ -28,7 +30,8 @@ public class CreateScrumTeam
                         .AnyAsync(t => t.Owner.TelegramUserId == id, cancellationToken);
                     return !teamExist;
                 })
-                .WithErrorCode(UserAlreadyHasTeam);
+                .WithErrorCode(UserAlreadyHasTeam.WithPrefix())
+                .WithMessage(UserAlreadyHasTeam);
             
             RuleFor(x => x.Name)
                 .NotEmpty()
@@ -39,7 +42,8 @@ public class CreateScrumTeam
                         .AsNoTracking()
                         .AnyAsync(t => t.Name == name, cancellationToken);
                     return !teamExist;
-                }).WithErrorCode(TeamAlreadyExists);
+                }).WithErrorCode(TeamAlreadyExists.WithPrefix())
+                .WithMessage(TeamAlreadyExists);
         }
     }
     
@@ -55,12 +59,8 @@ public class CreateScrumTeam
         public async Task<Response> Handle(Request request, CancellationToken cancellationToken)
         {
             var user = await _dbContext.Users.Where(u => u.TelegramUserId == request.TelegramUserId)
-                .FirstOrDefaultAsync(cancellationToken);
-            if (user == null)
-            {
-                throw new LogicConflictException( "User not found", UserNotFound);
-            }
-            
+                .FirstAsync(cancellationToken);
+         
             var scrumTeam = new Domain.Models.ScrumTeam
             {
                 Name = request.Name,

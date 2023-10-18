@@ -6,6 +6,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Team = Domain.Models.ScrumTeam;
 using static App.Features.ScrumTeam.Errors.ScrumTeamValidationErrors;
+using static App.Errors.ValidationErrorsCode;
 
 namespace App.Features.ScrumTeam.Requests;
 

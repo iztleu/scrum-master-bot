@@ -4,8 +4,10 @@ using Database;
 using Domain.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Team = Domain.Models.ScrumTeam;
 using static App.Features.ScrumTeam.Errors.ScrumTeamValidationErrors;
+using static App.Errors.ValidationErrorsCode;
 
 namespace App.Features.ScrumTeam.Requests;
 
@@ -19,7 +21,7 @@ public class GetScrumTeamByName
     {
         private readonly ScrumMasterDbContext _dbContext;
 
-        public Handler(ScrumMasterDbContext dbContext)
+        public Handler(ScrumMasterDbContext dbContext, IStringLocalizer<SharedResource> localizer)
         {
             _dbContext = dbContext;
         }
@@ -35,7 +37,7 @@ public class GetScrumTeamByName
 
             if (team == null)
             {
-                throw new ValidationErrorsException(string.Empty, "Team not found", TeamNotFound);
+                throw new LogicConflictException(TeamNotFound, TeamNotFound.WithPrefix());
             }
             
             return new Response(team);

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+    <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+        <xsd:element name="root" msdata:IsDataSet="true">
+            
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="name_already_taken" xml:space="preserve">
+        <value>имя уже занято</value>
+    </data>
+    <data name="name_required" xml:space="preserve">
+        <value>имя является обязательным</value>
+    </data>
+    <data name="team_already_exists" xml:space="preserve">
+        <value>команда уже существует</value>
+    </data>
+    <data name="team_not_found" xml:space="preserve">
+        <value>команда не найдена</value>
+    </data>
+    <data name="user_already_has_team" xml:space="preserve">
+        <value>пользователь уже имеет команду</value>
+    </data>
+    <data name="user_is_not_scrum_master" xml:space="preserve">
+        <value>пользователь не является scrum master</value>
+    </data>
+    <data name="user_not_found" xml:space="preserve">
+        <value>пользователь не найден</value>
+    </data>
+</root>

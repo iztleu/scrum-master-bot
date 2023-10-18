@@ -5,6 +5,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using static App.Features.ScrumTeam.Errors.ScrumTeamValidationErrors;
+using static App.Errors.ValidationErrorsCode;
 
 namespace App.Features.ScrumTeam.Requests;
 

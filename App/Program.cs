@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using App;
 using App.Features.Auth.Registration;
@@ -6,6 +7,7 @@ using App.Errors.Extensions;
 using App.Services;
 using Database;
 using FluentValidation;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
@@ -16,6 +18,7 @@ using UpdateHandler = App.Services.UpdateHandler;
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+builder.Services.AddScoped<LocalizationService>();
 
 builder.Services.AddMediatR(cfg => cfg
     .RegisterServicesFromAssembly(Assembly.GetExecutingAssembly())
@@ -24,6 +27,8 @@ builder.Services.AddMediatR(cfg => cfg
 
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 builder.Services.AddScoped<CurrentAuthInfoSource>();
+
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
 builder.AddAuth();
 
@@ -45,10 +50,10 @@ builder.Services.AddHostedService<TelegramBotService>();
 
 var app = builder.Build();
 
-app.UseBlazorFrameworkFiles();
-app.UseStaticFiles();
- 
-app.MapFallbackToFile("index.html");
+// app.UseBlazorFrameworkFiles();
+// app.UseStaticFiles();
+//  
+// app.MapFallbackToFile("index.html");
 
 app.UseHttpsRedirection();
 
@@ -56,6 +61,21 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+var supportedCultures = new[]
+{
+    new CultureInfo("en-US"),
+    new CultureInfo("en"),
+    new CultureInfo("ru-RU"),
+    new CultureInfo("ru"),
+};
+
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture("ru-RU"),
+    SupportedCultures = supportedCultures,
+    SupportedUICultures = supportedCultures
+});
 
 app.MapProblemDetails();
 
