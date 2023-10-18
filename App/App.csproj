@@ -52,9 +52,4 @@
         <DependentUpon>SharedResource.ru.resx</DependentUpon>
       </Compile>
     </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="obj\Debug\" />
-    </ItemGroup>
-
 </Project>

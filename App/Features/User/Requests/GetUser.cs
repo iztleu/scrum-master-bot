@@ -2,6 +2,7 @@ using Database;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using static App.Features.User.Errors.UserValidationErrors;
 
 namespace App.Features.User.Requests;
@@ -29,6 +30,7 @@ public class GetUser
     public class Handler : IRequestHandler<Request, Response>
     {
         private readonly ScrumMasterDbContext _dbContext;
+        private readonly IStringLocalizer<SharedResource> _localizer;
 
         public Handler(ScrumMasterDbContext dbContext)
         {
@@ -37,6 +39,7 @@ public class GetUser
         
         public async Task<Response> Handle(Request request, CancellationToken cancellationToken)
         {
+            
             var user = await _dbContext.Users
                 .FirstOrDefaultAsync(u => u.TelegramUserId == request.TelegramUserId, cancellationToken);
             return new Response(user);

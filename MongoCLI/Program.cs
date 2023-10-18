@@ -36,11 +36,12 @@ var movie = new Movie()
     rated = "PG-13",
     plot = "Plot 1",
     fullplot = "Full Plot 1",
-    director_id = director._id,
+    director = new Director(),
 };
 
 db.Directors.Add(director);
 db.Movies.Add(movie);
+
 await db.SaveChangesAsync();
 
 

@@ -4,6 +4,7 @@ using Database;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using FluentValidation;
+using Microsoft.Extensions.Localization;
 using static App.Features.Auth.Errors.AuthValidationErrors;
 
 namespace App.Features.Auth.Requests;
@@ -29,6 +30,7 @@ public class Authenticate
         
         private readonly ScrumMasterDbContext _dbContext;
         private readonly TokenService _tokenService;
+        private readonly IStringLocalizer<Authenticate> _localizer;
 
         public Handler(ScrumMasterDbContext dbContext, TokenService tokenService)
         {
