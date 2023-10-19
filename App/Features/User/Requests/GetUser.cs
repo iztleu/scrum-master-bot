@@ -1,6 +1,7 @@
 using Database;
 using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using static App.Features.User.Errors.UserValidationErrors;
@@ -27,22 +28,20 @@ public class GetUser
     //     }
     // }
     
-    public class Handler : IRequestHandler<Request, Response>
+    public class Handler(ScrumMasterDbContext _dbContext) : IRequestHandler<Request, Response>
     {
-        private readonly ScrumMasterDbContext _dbContext;
-        private readonly IStringLocalizer<SharedResource> _localizer;
-
-        public Handler(ScrumMasterDbContext dbContext)
-        {
-            _dbContext = dbContext;
-        }
-        
         public async Task<Response> Handle(Request request, CancellationToken cancellationToken)
         {
-            
             var user = await _dbContext.Users
                 .FirstOrDefaultAsync(u => u.TelegramUserId == request.TelegramUserId, cancellationToken);
             return new Response(user);
         }
     }
 }
+
+
+public class HomeController(ILogger<HomeController> _logger, ScrumMasterDbContext _dbContext) : Controller
+{
+    
+}
+
