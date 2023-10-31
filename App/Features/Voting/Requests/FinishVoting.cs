@@ -61,7 +61,7 @@ public class FinishVoting
                 throw new LogicConflictException("User is not a ScrumMaster of the team", UserIsNotScrumMaster);
             }
             
-            await _publisher.Publish(new VotingAutoFinishEvent(request.VotingId), cancellationToken);
+            await _publisher.Publish(new VotingFinishEvent(request.VotingId), cancellationToken);
         }
     }
 }

@@ -8,23 +8,23 @@ using Telegram.Bot.Types.Enums;
 
 namespace App.Features.Voting.Events;
 
-public class VotingAutoFinishEventHandler : INotificationHandler<VotingAutoFinishEvent>
+public class VotingFinishEventHandler : INotificationHandler<VotingFinishEvent>
 {
     private readonly ITelegramBotClient _telegramBotClient;
     private readonly ScrumMasterDbContext _dbContext;
-    private readonly ILogger<VotingAutoFinishEventHandler> _logger;
+    private readonly ILogger<VotingFinishEventHandler> _logger;
 
-    public VotingAutoFinishEventHandler(
+    public VotingFinishEventHandler(
         ScrumMasterDbContext dbContext, 
         ITelegramBotClient telegramBotClient, 
-        ILogger<VotingAutoFinishEventHandler> logger)
+        ILogger<VotingFinishEventHandler> logger)
     {
         _dbContext = dbContext;
         _telegramBotClient = telegramBotClient;
         _logger = logger;
     }
 
-    public async Task Handle(VotingAutoFinishEvent notification, CancellationToken cancellationToken)
+    public async Task Handle(VotingFinishEvent notification, CancellationToken cancellationToken)
     {
         var voting = await _dbContext.Votings
             .Include(v => v.Votes)

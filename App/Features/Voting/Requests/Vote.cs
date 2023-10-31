@@ -5,13 +5,15 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Telegram.Bot;
+
 namespace App.Features.Voting.Requests;
+
 using static App.Features.Voting.Errors.VotingValidationErrors;
 
 public class Vote
 {
-    public record Request(long TelegramUserId, long VotingId, string value) : IRequest;
-    
+    public record Request(long TelegramUserId, long VotingId, string Value) : IRequest;
+
     public class RequestValidator : AbstractValidator<Request>
     {
         public RequestValidator(ScrumMasterDbContext dbContext)
@@ -23,7 +25,7 @@ public class Vote
                         .AnyAsync(u => u.TelegramUserId == id, cancellationToken);
                     return teamExist;
                 }).WithErrorCode(UserNotFound);
-            
+
             RuleFor(x => x.VotingId)
                 .MustAsync(async (id, cancellationToken) =>
                 {
@@ -39,6 +41,7 @@ public class Vote
         private readonly ScrumMasterDbContext _dbContext;
         private readonly ITelegramBotClient _telegramBotClient;
         private readonly IPublisher _publisher;
+
         public Handler(ScrumMasterDbContext dbContext, ITelegramBotClient telegramBotClient, IPublisher publisher)
         {
             _dbContext = dbContext;
@@ -70,21 +73,20 @@ public class Vote
             voting.Votes.Add(new Domain.Models.Vote()
             {
                 Member = member,
-                Value = request.value,
+                Value = request.Value,
                 CreatedAt = DateTime.UtcNow,
             });
-            
             await _dbContext.SaveChangesAsync(cancellationToken);
-            
+
             if (voting.Votes.Count == voting.ScrumTeam.Members.Count)
             {
-                await _publisher.Publish(new VotingAutoFinishEvent(voting.Id), cancellationToken);
+                await _publisher.Publish(new VotingFinishEvent(voting.Id), cancellationToken);
             }
-            
+
             await _telegramBotClient
                 .SendTextMessageAsync(
                     request.TelegramUserId,
-                    "Ваш голос  принят", 
+                    "Ваш голос  принят",
                     cancellationToken: cancellationToken);
         }
     }
