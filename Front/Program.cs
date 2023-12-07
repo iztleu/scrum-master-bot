@@ -1,18 +1,22 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Front;
+using Front.Providers;
+using Front.Services;
+using Front.Storage;
+using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5217/") });
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
-builder.Services.AddOidcAuthentication(options =>
-{
-    // Configure your authentication provider options here.
-    // For more information, see https://aka.ms/blazor-standalone-auth
-    builder.Configuration.Bind("Local", options.ProviderOptions);
-});
+builder.Services.AddScoped<MemoryStorage>();
+builder.Services.AddScoped<ScrumMusterBotUserService>();
+builder.Services.AddScoped<ScrumMasterBotAuthenticationStateProvider>();
+
+builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<ScrumMasterBotAuthenticationStateProvider>());
+builder.Services.AddAuthorizationCore();
 
 await builder.Build().RunAsync();

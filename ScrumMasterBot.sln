@@ -12,7 +12,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApplication", "TestAppl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoCLI", "MongoCLI\MongoCLI.csproj", "{322E9DE1-FEE7-4B24-A6C8-6B1B6081D1D3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WasmFront", "WasmFront\WasmFront.csproj", "{8A758D32-00BB-4863-B622-29DEB8C54E7B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Front", "Front\Front.csproj", "{391C1011-927A-4360-8B3A-02BC10E593AC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,9 +44,9 @@ Global
 		{322E9DE1-FEE7-4B24-A6C8-6B1B6081D1D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{322E9DE1-FEE7-4B24-A6C8-6B1B6081D1D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{322E9DE1-FEE7-4B24-A6C8-6B1B6081D1D3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8A758D32-00BB-4863-B622-29DEB8C54E7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8A758D32-00BB-4863-B622-29DEB8C54E7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8A758D32-00BB-4863-B622-29DEB8C54E7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8A758D32-00BB-4863-B622-29DEB8C54E7B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{391C1011-927A-4360-8B3A-02BC10E593AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{391C1011-927A-4360-8B3A-02BC10E593AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{391C1011-927A-4360-8B3A-02BC10E593AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{391C1011-927A-4360-8B3A-02BC10E593AC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
