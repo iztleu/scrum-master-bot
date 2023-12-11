@@ -43,14 +43,14 @@ public class ScrumMasterBotAuthenticationStateProvider : AuthenticationStateProv
 
         if (user is not null)
         {
-            var authenticatedUser = await _userService.SendAuthenticateRequestAsync(user.Username, user.Password);
-
-            if (authenticatedUser is not null)
-            {
-                principal = authenticatedUser.ToClaimsPrincipal();
-            }
+            // var authenticatedUser = await _userService.SendAuthenticateRequestAsync(user.Username, user.Password);
+            //
+            // if (authenticatedUser is not null)
+            // {
+            //     principal = authenticatedUser.ToClaimsPrincipal();
+            // }
             
-            CurrentUser = authenticatedUser;
+            CurrentUser = user;
         }
 
         return new(principal);

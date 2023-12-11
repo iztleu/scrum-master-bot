@@ -28,6 +28,8 @@ builder.Services.AddMediatR(cfg => cfg
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 builder.Services.AddScoped<CurrentAuthInfoSource>();
 
+builder.Services.AddHttpClient("First API", httpClient => httpClient.BaseAddress = new("http://localhost:30911"));
+
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
 builder.AddAuth();

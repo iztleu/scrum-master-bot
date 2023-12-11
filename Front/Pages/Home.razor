@@ -7,5 +7,13 @@
 
 <h1>Hello, world!</h1>
 
-<div>Full name: @AuthenticationStateProvider.CurrentUser.FullName</div>
+@if(AuthenticationStateProvider.CurrentUser != null)
+{
+    <div>Full name: @AuthenticationStateProvider.CurrentUser.Username</div>
+}
+
+@code {
+    
+}
+
 Welcome to your new app.

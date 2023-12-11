@@ -11,15 +11,15 @@ public class ScrumMusterBotUserService
     private readonly HttpClient _httpClient;
     private readonly MemoryStorage _authenticationDataMemoryStorage;
 
-    public ScrumMusterBotUserService(HttpClient httpClient, MemoryStorage authenticationDataMemoryStorage)
+    public ScrumMusterBotUserService(IHttpClientFactory HttpClientFactory, MemoryStorage authenticationDataMemoryStorage)
     {
-        _httpClient = httpClient;
+        _httpClient = HttpClientFactory.CreateClient("app");
         _authenticationDataMemoryStorage = authenticationDataMemoryStorage;
     }
     
     public async Task SendVerifyCode (string username)
     {
-        var response = await _httpClient.GetAsync($"/auth/send-verify-code/username={username}");
+        var response = await _httpClient.GetAsync($"/auth/send-verify-code?username={username}");
         if (!response.IsSuccessStatusCode)
         {
             throw new Exception("Error sending verify code");
@@ -57,7 +57,7 @@ public class ScrumMusterBotUserService
         if (tokenHandler.CanReadToken(token))
         {
             var jwtSecurityToken = tokenHandler.ReadJwtToken(token);
-            identity = new(jwtSecurityToken.Claims, "Blazor School");
+            identity = new(jwtSecurityToken.Claims, "ScrumMaterBotIdentity");
         }
 
         return new(identity);

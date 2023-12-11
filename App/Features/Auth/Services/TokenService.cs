@@ -27,9 +27,7 @@ public class TokenService
         var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var utcNow = DateTime.UtcNow;
-
-        
-        
+                
         var securityTokenDescriptor = new SecurityTokenDescriptor
         {
             Issuer = _jwtOptions.Issuer,
